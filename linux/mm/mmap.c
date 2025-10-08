@@ -54,6 +54,14 @@
 #include <asm/tlb.h>
 #include <asm/mmu_context.h>
 
+/*
+ *	for use netlink Written By Jin Minu
+ */
+
+#include <asm/types.h>
+#include <linux/netlink.h>
+
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/mmap.h>
 
@@ -123,7 +131,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	LIST_HEAD(uf);
 	struct vma_iterator vmi;
 
-	printk("[JMW] brk occur!\n");
+	printk(KERN_INFO "[JMW] brk occur!\n");
 
 	if (mmap_write_lock_killable(mm))
 		return -EINTR;

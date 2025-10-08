@@ -13,11 +13,6 @@ int main(void)
 	printf("assign mem!\n");
 	free(p);
 
-
-	int *k = NULL;
-	k = malloc(1024 * 1024);
-	free(k);
-
 	return 0;
 }
 
