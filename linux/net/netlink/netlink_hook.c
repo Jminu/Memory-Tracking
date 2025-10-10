@@ -34,31 +34,57 @@ void nl_send_msg(pid_t pid)
 	data.pid = pid;
 	int data_length = sizeof(data);
 
-	// skb_out = 버퍼
-	skb_out = nlmsg_new(data_len, GFP_KERNEL); // Socket buffer allocation
+
+
+	/*
+	 * nlmsg_new : Allocate a new netlink message
+	 *
+	 * data_length : payload
+	 * GFP_KERNEL : type of memory to allocate
+	 */
+	skb_out = nlmsg_new(data_length, GFP_KERNEL); 
 	if (!skb_out) {
 		printk(KERN_ERR "[JMW] Netlink Alloc failed!\n");
 		return;
 	}
 
-	// netlink 메세지 헤더
+	/*
+	 * nlmsg_put : add new netlink message to an skb (skb : socket buffer)
+	 *
+	 * skb_out : socket buffer to store message in
+	 * port id : 
+	 * seq : 
+	 * NETLINK_JMW : message type
+	 * data_length : length of payload
+	 * flag : 
+	 */	
 	nlh = nlmsg_put(skb_out, 0, 0, NETLINK_JMW, data_length, 0);
 	if (!nlh) {
 		kfree_skb(skb_out);
 		return;
 	}
 
-	// data(PID) copy
-	memcpy(nlmsg_data(nlh), &data, data_len); // nlmsg_data : payload data
+	/*
+	 * nlmsg_data : payload의 포인터
+	 * nlmsg_data의 인자 nlh : netlink message header
+	 */
+	memcpy(nlmsg_data(nlh), &data, data_length); // payload 포인터에 data_length만큼 data copy
 
 	NETLINK_CB(skb_out).dst_group = 0;
-	int ret = nlmsg_unicast(nl_sk, skb_out, 1);
+
+	/*
+	 * nlmsg_unicast : 특정 pid와 1:1통신
+	 * netlink_socket : 메세지 보내는 데 사용할 커널 Netlink Socket pointer
+	 * skb_out : message buffer (헤더랑 payload 담김)a
+	 * 1 : 대상 프로세스 PID (아마 동적으로 설정할 필요가 있을듯)
+	 */
+	int ret = nlmsg_unicast(netlink_socket, skb_out, 1); // unicast : 1:1통신
 	if (ret < 0) {
 		printk(KERN_ERR "[JMW] Netlink send error!\n");
 	}
 }
 
-EXPORT_SYMBOL(netlink_send_msg);
+EXPORT_SYMBOL(nl_send_msg);
 
 void nl_recv_msg()
 {
@@ -73,7 +99,7 @@ void nl_recv_msg()
 static int __init netlink_init(void)
 {
 	struct netlink_kernel_cfg config = {
-		.input = nl_recv_msg; // 수신 핸들러 -> 어차피 안씀
+		// .input = nl_recv_msg; // 수신 핸들러 -> 어차피 안씀
 	};
 
 	netlink_socket = netlink_kernel_create(&init_net, NETLINK_JMW, &config);
