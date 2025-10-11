@@ -79,7 +79,7 @@ void nl_send_msg(pid_t pid)
 	 * skb_out : message buffer (헤더랑 payload 담김)a
 	 * monitor_pid : 대상 프로세스 PID (아마 동적으로 설정할 필요가 있을듯)
 	 */
-	int ret = nlmsg_unicast(netlink_socket, skb_out, monitor_pid, 0); // unicast : 1:1통신
+	int ret = nlmsg_unicast(netlink_socket, skb_out, monitor_pid); // unicast : 1:1통신
 	if (ret < 0) {
 		printk(KERN_ERR "[JMW] Netlink send error!\n");
 	}
