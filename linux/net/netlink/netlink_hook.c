@@ -2,7 +2,7 @@
  *	Written By Jin Minu
  */
 
-#include <module.h>
+#include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/netlink.h>
 #include <asm/types.h>
@@ -16,6 +16,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("JMW");
 
 struct sock *netlink_socket = NULL;
+static pid_t monitor_pid = 0;
 
 struct syscall_data {
 	pid_t pid;
@@ -76,9 +77,9 @@ void nl_send_msg(pid_t pid)
 	 * nlmsg_unicast : 특정 pid와 1:1통신
 	 * netlink_socket : 메세지 보내는 데 사용할 커널 Netlink Socket pointer
 	 * skb_out : message buffer (헤더랑 payload 담김)a
-	 * 1 : 대상 프로세스 PID (아마 동적으로 설정할 필요가 있을듯)
+	 * monitor_pid : 대상 프로세스 PID (아마 동적으로 설정할 필요가 있을듯)
 	 */
-	int ret = nlmsg_unicast(netlink_socket, skb_out, 1); // unicast : 1:1통신
+	int ret = nlmsg_unicast(netlink_socket, skb_out, monitor_pid, 0); // unicast : 1:1통신
 	if (ret < 0) {
 		printk(KERN_ERR "[JMW] Netlink send error!\n");
 	}
@@ -86,11 +87,28 @@ void nl_send_msg(pid_t pid)
 
 EXPORT_SYMBOL(nl_send_msg);
 
-void nl_recv_msg()
+void nl_recv_msg(struct sk_buff *skb) //인자로 메세지 버퍼 받음
 {
 	/*
-	 *	User Space에서 받을 정보 없음
+	 * monitor_pid(결과를 보낼 pid)를 설정
 	 */
+
+	struct nlmsghdr *nlh;
+	pid_t sender_pid;
+
+	if (!skb)
+		return;
+
+	nlh = nlmsg_hdr(skb); // message buffer pointer
+	sender_pid = nlh->nlmsg_pid; // get sender's pid
+
+	if (sender_pid != 0) {
+		monitor_pid = sender_pid;
+		printk(KERN_INFO "[JMW] Monitor pid is : %d\n", monitor_pid);
+	}
+	else {
+		printk(KERN_WARNING "[JMW] sender_pid = 0");
+	}
 }
 
 /*
@@ -99,7 +117,7 @@ void nl_recv_msg()
 static int __init netlink_init(void)
 {
 	struct netlink_kernel_cfg config = {
-		// .input = nl_recv_msg; // 수신 핸들러 -> 어차피 안씀
+		.input = nl_recv_msg,
 	};
 
 	netlink_socket = netlink_kernel_create(&init_net, NETLINK_JMW, &config);
