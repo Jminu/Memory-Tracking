@@ -559,6 +559,7 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 	}
 
 	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
+	nl_send_msg(current->pid);
 out_fput:
 	if (file)
 		fput(file);
