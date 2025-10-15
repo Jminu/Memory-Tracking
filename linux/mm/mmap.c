@@ -60,7 +60,7 @@
  */
 #include <asm/types.h>
 #include <linux/netlink.h>
-#include <linux/netlink_hook.h>
+#include <net/netlink_hook.h>
 
 
 #define CREATE_TRACE_POINTS
@@ -212,6 +212,10 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	mm->brk = brk;
 	if (mm->def_flags & VM_LOCKED)
 		populate = true;
+
+	if (system_state == SYSTEM_RUNNING) {
+		nl_send_msg(cur_pid);
+	}
 
 success:
 	mmap_write_unlock(mm);
