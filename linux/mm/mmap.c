@@ -54,6 +54,15 @@
 #include <asm/tlb.h>
 #include <asm/mmu_context.h>
 
+/*
+ * Written By Jin Minu
+ * for Netlink
+ */
+#include <asm/types.h>
+#include <linux/netlink.h>
+#include <linux/netlink_hook.h>
+
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/mmap.h>
 
@@ -122,6 +131,8 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	bool populate = false;
 	LIST_HEAD(uf);
 	struct vma_iterator vmi;
+
+	pid_t cur_pid = current->pid;
 
 	if (mmap_write_lock_killable(mm))
 		return -EINTR;
