@@ -209,7 +209,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	if (do_brk_flags(&vmi, brkvma, oldbrk, newbrk - oldbrk, 0) < 0)
 		goto out;
 
-	mm->brk = brk;
+	mm->brk = brk; // 실제 바뀌는 구간
 	if (mm->def_flags & VM_LOCKED)
 		populate = true;
 
@@ -559,7 +559,9 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 	}
 
 	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
-	nl_send_msg(current->pid);
+	if (system_state == SYSTEM_RUNNING) {
+		nl_send_msg(current->pid);
+	}
 out_fput:
 	if (file)
 		fput(file);

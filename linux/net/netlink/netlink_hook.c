@@ -11,6 +11,7 @@
 #include <linux/pid.h>
 
 #define NETLINK_JMW 30
+#define SYSCALL_NAME 10
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("JMW");
@@ -20,6 +21,7 @@ static pid_t monitor_pid = 0;
 
 struct syscall_data {
 	pid_t pid;
+	char name[SYSCALL_NAME]; // system call name
 };
 
 /*
