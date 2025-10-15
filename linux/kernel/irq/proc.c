@@ -33,7 +33,7 @@
  * information must be protected by sparse_irq_lock.
  */
 static struct proc_dir_entry *root_irq_dir;
-extern uint32_t raspbian_debug_state;
+
 #ifdef CONFIG_SMP
 
 enum {
@@ -456,19 +456,6 @@ int __weak arch_show_interrupts(struct seq_file *p, int prec)
 	return 0;
 }
 
-noinline void rpi_get_interrupt_info(struct irqaction* action_p) {
-	unsigned irq_num = action_p->handler;
-	void* irq_handler = NULL;
-
-	if (action_p->handler) {
-		irq_handler = (void *)action_p->handler;
-	}
-
-	if (irq_handler) {
-		trace_printk("[%s] %d: %s, irq_handler : %p5 \n", current->comm, irq_num, action_p->name, irq_handler);
-	}
-}
-
 #ifndef ACTUAL_NR_IRQS
 # define ACTUAL_NR_IRQS nr_irqs
 #endif
@@ -533,14 +520,6 @@ int show_interrupts(struct seq_file *p, void *v)
 		seq_printf(p, "-%-8s", desc->name);
 
 	action = desc->action;
-	
-	if (7989 == raspbian_debug_state) {
-		if (action) {
-			printk("JMW TEST\n");
-			rpi_get_interrupt_info(action);
-		}
-	}
-
 	if (action) {
 		seq_printf(p, "  %s", action->name);
 		while ((action = action->next) != NULL)

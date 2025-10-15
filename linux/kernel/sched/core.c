@@ -3661,11 +3661,6 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
 {
 	WRITE_ONCE(p->__state, TASK_RUNNING);
 	trace_sched_wakeup(p);
-
-	if (strcmp(p->comm, "kthreadf")) {
-		printk("JMW [+][%s] wakeup kthreadd process \n", current->comm);
-		dump_stack();
-	}
 }
 
 static void

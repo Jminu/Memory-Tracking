@@ -726,7 +726,7 @@ static int memory_open(struct inode *inode, struct file *filp)
 	filp->f_mode |= dev->fmode;
 
 	if (dev->fops->open)
-		return dev->fops->open(inode, filp); // 메모리는 file open하는것처럼 다룬다
+		return dev->fops->open(inode, filp);
 
 	return 0;
 }
@@ -753,11 +753,11 @@ static int __init chr_dev_init(void)
 	int retval;
 	int minor;
 
-	if (register_chrdev(MEM_MAJOR, "mem", &memory_fops)) // 문자 디바이스 드라이버 등록
+	if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
 		printk("unable to get major %d for memory devs\n", MEM_MAJOR);
 
-	retval = class_register(&mem_class); // 클래스를 등록
-	if (retval) // class_register에서 에러코드 리턴할때
+	retval = class_register(&mem_class);
+	if (retval)
 		return retval;
 
 	for (minor = 1; minor < ARRAY_SIZE(devlist); minor++) {
@@ -770,11 +770,11 @@ static int __init chr_dev_init(void)
 		if ((minor == DEVPORT_MINOR) && !arch_has_dev_port())
 			continue;
 
-		device_create(&mem_class, NULL, MKDEV(MEM_MAJOR, minor), // 장치 등록
+		device_create(&mem_class, NULL, MKDEV(MEM_MAJOR, minor),
 			      NULL, devlist[minor].name);
 	}
 
 	return tty_init();
 }
 
-fs_initcall(chr_dev_init); // 모듈 시작
+fs_initcall(chr_dev_init);

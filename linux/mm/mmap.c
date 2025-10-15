@@ -54,14 +54,6 @@
 #include <asm/tlb.h>
 #include <asm/mmu_context.h>
 
-/*
- *	for use netlink Written By Jin Minu
- */
-#include <asm/types.h>
-#include <linux/netlink.h>
-#include <linux/netlink_hook.h>
-
-
 #define CREATE_TRACE_POINTS
 #include <trace/events/mmap.h>
 
@@ -130,13 +122,6 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	bool populate = false;
 	LIST_HEAD(uf);
 	struct vma_iterator vmi;
-	
-	
-	// 실제로 주소가 바뀌는 부분으로 수정 필요
-	pid_t jmw_pid = current->pid; // brk 실행시킨 현재 pid가져옴
-	printk(KERN_INFO "[JMW] [PID]: %d brk occur!\n", jmw_pid);
-	nl_send_msg(jmw_pid); // User Space로 pid를 보냄
-	printk(KERN_INFO "[JWM] send success!\n");
 
 	if (mmap_write_lock_killable(mm))
 		return -EINTR;

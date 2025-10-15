@@ -120,8 +120,6 @@
 
 #include <kunit/visibility.h>
 
-#include <linux/kernel.h>
-
 /*
  * Minimum number of threads to boot the kernel
  */
@@ -2768,7 +2766,6 @@ struct task_struct *create_io_thread(int (*fn)(void *), void *arg, int node)
  *
  * args->exit_signal is expected to be checked for sanity by the caller.
  */
-static int debug_kernel_thread = 1;
 pid_t kernel_clone(struct kernel_clone_args *args)
 {
 	u64 clone_flags = args->flags;
@@ -2812,11 +2809,6 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 
 	p = copy_process(NULL, trace, NUMA_NO_NODE, args);
 	add_latent_entropy();
-
-	if (debug_kernel_thread) {
-		printk("[+][%s] process n ", current->comm);
-		dump_stack();
-	}
 
 	if (IS_ERR(p))
 		return PTR_ERR(p);

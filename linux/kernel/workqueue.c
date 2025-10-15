@@ -3757,9 +3757,6 @@ static void insert_wq_barrier(struct pool_workqueue *pwq,
 	unsigned int work_color;
 	struct list_head *head;
 
-	printk("[+] process : %s \n", current->comm);
-	printk("[+] [debug] message [F : %s, L : %d] : caller : (%pS) \n", __func__, __LINE__, (void *)__builtin_return_address(0));
-
 	/*
 	 * debugobject calls are safe here even with pool->lock locked
 	 * as we know for sure that this will not trigger any of the

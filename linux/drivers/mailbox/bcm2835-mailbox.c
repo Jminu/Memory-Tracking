@@ -80,39 +80,6 @@ static irqreturn_t bcm2835_mbox_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static void interrupt_debug_irq_desc(int irq_num)
-{
-	struct irqaction *action;
-	struct irq_desc *desc;
-
-	desc = irq_to_desc(irq_num);
-
-	if (!desc ) {
-		pr_err("invalid desc at %s line: %d\n", __func__, __LINE__);
-		return;
-	}
-
-	action = desc->action;
-
-	if (!action ) {
-		pr_err("invalid action at %s line:%d \n", __func__, __LINE__);
-		return;
-	}
-
-	printk("[+] irq_desc debug start \n");
-
-	printk("irq num: %d name: %8s \n", action->irq , action->name);
-	printk("dev_id:0x%x \n", (unsigned int)action->dev_id);
-
-	if (action->handler) {
-		printk("interrupt handler: %pF \n", action->handler);
-	}
-
-	printk("[-] irq_desc debug end \n");
-}
-
-
-
 static int bcm2835_send_data(struct mbox_chan *link, void *data)
 {
 	struct bcm2835_mbox *mbox = bcm2835_link_mbox(link);
@@ -169,9 +136,6 @@ static struct mbox_chan *bcm2835_mbox_index_xlate(struct mbox_controller *mbox,
 	return &mbox->chans[0];
 }
 
-
-
-
 static int bcm2835_mbox_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -184,9 +148,8 @@ static int bcm2835_mbox_probe(struct platform_device *pdev)
 	spin_lock_init(&mbox->lock);
 
 	ret = devm_request_irq(dev, platform_get_irq(pdev, 0),
-			       bcm2835_mbox_irq, 0, dev_name(dev), mbox);
-
-	interrupt_debug_irq_desc(31); //ojw 추가.
+			       bcm2835_mbox_irq, IRQF_NO_SUSPEND, dev_name(dev),
+			       mbox);
 	if (ret) {
 		dev_err(dev, "Failed to register a mailbox IRQ handler: %d\n",
 			ret);
