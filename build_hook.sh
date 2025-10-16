@@ -3,7 +3,7 @@
 echo "configure build output path"
 
 # KERNEL_TOP_PATH="$( cd "$(dirname "$0")" ; pwd -P)"
-KERNEL_TOP_PATH="/project/Kernel-Analysis/linuxSrc"
+KERNEL_TOP_PATH="/project/kernel/Kernel-Analysis/linuxSrc"
 
 OUTPUT="$KERNEL_TOP_PATH/out"
 echo "$OUTPUT"
