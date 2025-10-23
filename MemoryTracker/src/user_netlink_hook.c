@@ -25,42 +25,42 @@ void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     int reg_len = strlen(reg_msg) + 1; // reg_len = 13
 
     
-   /*
-    * allocate message buffer for Register Message to Main Kernel
-    */ 
+    /*
+     *	allocate message buffer for Register Message to Main Kernel
+     */ 
     nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(reg_len));
     if (!nlh) {
         perror("[USER] Error: Failed to allocate registration buffer");
         return;
     }
 
-   /*
-    * memset -> message buffer initialize with 0
-    * len
-    * type
-    * flags 지정
-    *
-    * nlmsg_pid = 발신자 pid : 커널쪽에서 monitor_pid로 저장
-    */ 
+    /*
+     *	memset -> message buffer initialize with 0
+     *	len
+     *	type
+     *	flags 지정
+     *
+     *	nlmsg_pid = 발신자 pid : 커널쪽에서 monitor_pid로 저장
+     */ 
     memset(nlh, 0, NLMSG_SPACE(reg_len));
     nlh->nlmsg_len = NLMSG_SPACE(reg_len);
     nlh->nlmsg_type = NL_MSG_REG;
     nlh->nlmsg_flags = 0;
     nlh->nlmsg_pid = src_addr->nl_pid;
 
-   //copy data to payload 
+    //copy data to payload 
     strcpy(NLMSG_DATA(nlh), reg_msg);
 
     /*
-     * set destination
-     * destination is Main Kernel (PID = 0)
+     * 	set destination
+     * 	destination is Main Kernel (PID = 0)
      */ 
     memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.nl_family = AF_NETLINK;
     dest_addr.nl_pid = 0; // 커널의 PID
     dest_addr.nl_groups = 0;
 
-    // 5. msg 구조체 설정
+    // msg 구조체 설정
     memset(&iov, 0, sizeof(iov));
     iov.iov_base = (void *)nlh;
     iov.iov_len = nlh->nlmsg_len;
@@ -71,7 +71,7 @@ void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    // 6. 전송
+    // 전송
     if (sendmsg(nl_socket_fd, &msg, 0) < 0) {
         perror("[USER] Error: Failed to send registration message");
     } else {
@@ -81,96 +81,107 @@ void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     free(nlh);
 }
 
+int set_nl_socket() {
+	int nl_socket_fd;
+	struct sockaddr_nl src_addr;
+	struct sockaddr_nl dest_addr;
 
-int main(int argc, char **argv) {
-    int nl_socket_fd;
-    struct sockaddr_nl src_addr;
-    struct sockaddr_nl dest_addr;
-    struct nlmsghdr *nlh = NULL;
-    struct iovec iov;
-    struct msghdr msg;
-    
-    // Kernel쪽에서 데이터 수신받을 버퍼 
-    char buffer[MAX_PAYLOAD];
-    struct syscall_data *received_data;
+	// Kernel에서 데이터 수신받은거 저장할 버퍼
+	char buffer[MAX_PAYLOAD];
+	struct syscall_data *received_data;
 
-    printf("[USER] Starting Netlink listener (Protocol: %d)\n", NETLINK_JMW);
+	/*
+	 *	Create Netlink Socket
+	 *	use AF_NETLINK, SOCK_RAW, NETLINK_JMW=protocol 30
+	 *
+	 */
+	printf("[USER] Creating Netlink Listener (protocol : %d)\n", NETLINK_JMW);
+	nl_socket_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_JMW); // netlink socket fd 생성
+	if (nl_socket_fd < 0) {
+		perror("[USER] Error : Failed to create Netlink Socket");
+		return -1;
+	}
+	printf("[USER] Complete Create Socket\n");
+	sleep(3);
 
-    /*
-     * create Netlink Socket
-     * use AF_NETLINK, SOCK_RAW protocol ID
-     */
-    nl_socket_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_JMW);
-    if (nl_socket_fd < 0) {
-        perror("[USER] Error: Failed to create Netlink socket");
-        return -1;
-    }
+	/*
+	 * 	memset으로 src_addr 0으로 초기화
+	 * 	nl_family를 AF_NETLINK
+	 * 	nl_pid : 송신자 pid - 커널쪽 netlink에 알려줌
+	 * 	nl_groups = 0 : 유니캐스트
+	 */
+	memset(&src_addr, 0, sizeof(src_addr));
+	src_addr.nl_family = AF_NETLINK;
+	src_addr.nl_pid = getpid();
+	src_addr.nl_groups = 0;
 
-    /*
-     * memset : src_addr 구조체 0으로 초기화
-     * nl_family
-     * nl_pid : 발신자 pid
-     * nl_groups : 멀티캐스트 그룹에 있는가? -> 여기서는 유니캐스트이므로 0
-     */
-    memset(&src_addr, 0, sizeof(src_addr));
-    src_addr.nl_family = AF_NETLINK;
-    src_addr.nl_pid = getpid(); 
-    src_addr.nl_groups = 0; 
+	/*
+	 *	(struct sockaddr *)&src_addr : IP주소, port번호 저장하기 위한 변수 구조체
+	 *	sizeof(src_addr) : 두번째 인자의 데이터 크기
+	 *
+	 */
+	if (bind(nl_socket_fd, (struct sockaddr *)&src_addr, sizeof(src_addr)) < 0) {
+		perror("[USER] Error : Failed to bind Netlink Socket");
+		close(nl_socket_fd);
+		return -1;
+	}
+	printf("[USER] Complete Bind\n");
+	sleep(3);
 
-    if (bind(nl_socket_fd, (struct sockaddr *)&src_addr, sizeof(src_addr)) < 0) {
-        perror("[USER] Error: Failed to bind Netlink socket");
-        close(nl_socket_fd);
-        return -1;
-    }
+	send_registration(nl_socket_fd, &src_addr); // Kernel쪽에 소켓 등록요청
+	printf("[USER] Registration Complete Netlink Socket to Kernel\n");
+	sleep(3);
 
-    send_registration(nl_socket_fd, &src_addr);
+	return nl_socket_fd;
+}
 
-    printf("[USER] Netlink socket bound (PID: %d). Waiting for messages from Kernel...\n", getpid());
-    printf("====================================================\n");
+int main(void) {
+	int nl_socket_fd = 0;
+	struct nlmsghdr *nlh = NULL;
+	struct iovec iov;
+	struct msghdr msg;
 
-    /*
-     * allocate buffer for 커널에서 수신받은 메세지
-     */
-    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-    if (!nlh) {
-        perror("[USER] Error: Failed to allocate NLMSG buffer");
-        close(nl_socket_fd);
-        return -1;
-    }
+	struct syscall_data *received_data;
 
-   /*
-    * struct iovec iov
-    * struct msghdr msg
-    *
-    * iovec, msghdr for Linux Socket Communication (recvmsg, sendmsg)
-    */
-    memset(&iov, 0, sizeof(iov)); 
-    iov.iov_base = (void *)nlh;
-    iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
+	nl_socket_fd = set_nl_socket(); // get netlink socket fd
 
-    memset(&msg, 0, sizeof(msg));
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
+	/*
+	 *	buffer allocation for Kernel Message
+	 */
+	nlh = (struct nlmsghdr*)malloc(NLMSG_SPACE(MAX_PAYLOAD)); // header 설정
+	if (!nlh) {
+		perror("[USER] Error : Failed to allocate NLMSG buffer");
+		close(nl_socket_fd);
+		return -1;
+	}
 
-    while (1) {
-        // wait for Kernel Message. (Blocking Read)
-        int len = recvmsg(nl_socket_fd, &msg, 0); 
-        
-        if (len < 0) {
-            perror("[USER] Error during recvmsg");
-            continue;
-        }
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = (void *)nlh;
+	iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
 
-        // 메시지 헤더를 통해 실제 데이터 페이로드 시작 위치를 찾습니다.
-        received_data = (struct syscall_data *)NLMSG_DATA(nlh);
-        
-        // 수신된 데이터를 출력합니다.
-        printf("[RECEIVE] Received data length: %zu bytes\n", sizeof(*received_data));
-        printf(" -> Hooked Process PID: %d\n", received_data->pid);
-        printf("====================================================\n");
-    }
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
 
-    free(nlh);
-    close(nl_socket_fd);
-    return 0;
+	printf("[USER] Complete Setting\n");
+	sleep(3);
+
+	while (1) {
+		int len = recvmsg(nl_socket_fd, &msg, 0);
+
+		if (len < 0) {
+			perror("[USER] Error during recvmsg");
+			return -1;
+		}
+
+		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
+
+		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
+		printf("[HOOKED PID] : %d\n", received_data->pid);
+		printf("===========================================\n");
+	}
+
+	free(nlh);
+	close(nl_socket_fd);
+	return 0;
 }

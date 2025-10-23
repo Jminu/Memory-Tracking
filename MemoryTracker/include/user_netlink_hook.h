@@ -6,6 +6,6 @@
 #include <linux/netlink.h>
 
 void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr);
-void set_nl_socket();
+int set_nl_socket();
 
 #endif
