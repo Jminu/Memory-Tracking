@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <string.h>
+
+#define MAX_LINE_LENGTH 128
 
 FILE *open_proc_stat(pid_t pid) {
-	FILE *dir_fd = NULL;
+	FILE *status_fd = NULL;
 	char dir_name[] = "/proc/";
 	char proc_num[16];
 	char ch[] = "/status";
@@ -14,18 +17,30 @@ FILE *open_proc_stat(pid_t pid) {
 	char full_proc_path[64];
 	snprintf(full_proc_path, sizeof(full_proc_path), "%s%s%s", dir_name, proc_num, ch);
 
-	dir_fd = fopen(full_proc_path, "r");
-	if (dir_fd < 0) {
+	status_fd = fopen(full_proc_path, "r");
+	if (status_fd < 0) {
 		perror("Open Error!");
 		exit(1);	
 	}
-	printf("Open Success!\n");
+	printf("[FILE] /proc/%d/status Open Success!\n", pid);
 	
-	return dir_fd;
+	return status_fd;
 }
 
-void get_proc_mem_info() {
+long get_proc_mem_info(FILE *status_fd) {
+	char line[MAX_LINE_LENGTH];
+	int vm_rss = -1;
+	char unit[3];
 
+	while (fgets(line, sizeof(line), status_fd) != NULL) {
+		if (strncmp(line, "VmRSS:", 6) == 0) {
+			if (sscanf(line, "VmRSS: %ld %4s", &vm_rss, unit) != 0) {
+				return vm_rss;
+				break;
+			}
+		}
+	}
+	return -1; // Error
 }
 
 int main(void) {
@@ -34,7 +49,11 @@ int main(void) {
 	scanf("%d", &pid);
 
 	FILE *fd = open_proc_stat(pid);
+	long vm_rss = get_proc_mem_info(fd);
 	
+
+	printf("[PID]: %d, [VmRSS]: %ld\n", pid, vm_rss);
+	fclose(fd);
 
 	return 0;
 }
