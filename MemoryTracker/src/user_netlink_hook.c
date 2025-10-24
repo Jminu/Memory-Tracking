@@ -147,6 +147,7 @@ int main(void) {
 
 	/*
 	 *	buffer allocation for Kernel Message
+	 *	payload will continue behind this header
 	 */
 	nlh = (struct nlmsghdr*)malloc(NLMSG_SPACE(MAX_PAYLOAD)); // header 설정
 	if (!nlh) {
