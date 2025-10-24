@@ -141,6 +141,7 @@ int main(void) {
 	struct iovec iov;
 	struct msghdr msg;
 
+	pid_t hooked_pid = -1;
 	struct syscall_data *received_data;
 
 	nl_socket_fd = set_nl_socket(); // get netlink socket fd
@@ -176,9 +177,10 @@ int main(void) {
 		}
 
 		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
+		hooked_pid = received_data->pid;
 
 		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
-		printf("[HOOKED PID] : %d\n", received_data->pid);
+		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
 	}
 
