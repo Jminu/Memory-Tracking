@@ -42,6 +42,9 @@ long get_proc_mem_info(FILE *status_fd) {
 	return -1; // Error
 }
 
+/*
+ * Use Example
+ */
 int main(void) {
 	pid_t pid = 0;
 	printf(">>>");

@@ -135,11 +135,13 @@ int set_nl_socket() {
 	return nl_socket_fd;
 }
 
-int main(void) {
+void listen_syscall() {
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
 	struct iovec iov;
 	struct msghdr msg;
+
+	static int syscall_cnt = 0;
 
 	pid_t hooked_pid = -1;
 	struct syscall_data *received_data;
@@ -153,8 +155,9 @@ int main(void) {
 	nlh = (struct nlmsghdr*)malloc(NLMSG_SPACE(MAX_PAYLOAD)); // header 설정
 	if (!nlh) {
 		perror("[USER] Error : Failed to allocate NLMSG buffer");
+		free(nlh);
 		close(nl_socket_fd);
-		return -1;
+		exit(1);	
 	}
 
 	memset(&iov, 0, sizeof(iov));
@@ -167,24 +170,30 @@ int main(void) {
 
 	printf("[USER] Complete Setting\n");
 	sleep(3);
+	printf("[USER] Listening...");
 
 	while (1) {
 		int len = recvmsg(nl_socket_fd, &msg, 0);
 
 		if (len < 0) {
 			perror("[USER] Error during recvmsg");
-			return -1;
+			free(nlh);
+			close(nl_socket_fd);
+			exit(1);	
 		}
 
 		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
 		hooked_pid = received_data->pid;
+		syscall_cnt++;
 
 		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
+		printf("[SYSCALL COUNT] : %d\n", syscall_cnt);
 		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
 	}
+}
 
-	free(nlh);
-	close(nl_socket_fd);
+int main(void) {
+	listen_syscall();
 	return 0;
 }
