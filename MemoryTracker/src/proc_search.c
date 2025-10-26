@@ -18,7 +18,7 @@ FILE *open_proc_stat(pid_t pid) {
 	snprintf(full_proc_path, sizeof(full_proc_path), "%s%s%s", dir_name, proc_num, ch);
 
 	status_fd = fopen(full_proc_path, "r");
-	if (status_fd < 0) {
+	if (status_fd == NULL) {
 		perror("Open Error!");
 		exit(1);	
 	}
@@ -29,14 +29,13 @@ FILE *open_proc_stat(pid_t pid) {
 
 long get_proc_mem_info(FILE *status_fd) {
 	char line[MAX_LINE_LENGTH];
-	int vm_rss = -1;
+	long vm_rss = -1;
 	char unit[3];
 
 	while (fgets(line, sizeof(line), status_fd) != NULL) {
 		if (strncmp(line, "VmRSS:", 6) == 0) {
 			if (sscanf(line, "VmRSS: %ld %4s", &vm_rss, unit) != 0) {
 				return vm_rss;
-				break;
 			}
 		}
 	}
