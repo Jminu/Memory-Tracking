@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
+#include "proc_search.h"
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -170,7 +171,7 @@ void listen_syscall() {
 
 	printf("[USER] Complete Setting\n");
 	sleep(3);
-	printf("[USER] Listening...");
+	printf("[USER] Listening...\n");
 
 	while (1) {
 		int len = recvmsg(nl_socket_fd, &msg, 0);
@@ -184,10 +185,15 @@ void listen_syscall() {
 
 		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
 		hooked_pid = received_data->pid;
+		
+		FILE *fd = open_proc_stat(hooked_pid);
+		long vm_rss_byte = get_proc_mem_info(fd) * 1024;
+
 		syscall_cnt++;
 
 		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
 		printf("[SYSCALL COUNT] : %d\n", syscall_cnt);
+		printf("[BYTE] : %ld\n", vm_rss_byte);
 		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
 	}

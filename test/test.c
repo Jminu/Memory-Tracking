@@ -15,7 +15,7 @@ int main()
 			perror("malloc failed!\n");
 			return 0;
 		}
-		sleep(10);
+		sleep(1);
 		size *= 2;
 	}
 

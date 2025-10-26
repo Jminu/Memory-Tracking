@@ -9,14 +9,28 @@ CFLAGS = -I$(HDR_DIR) -Wall -g
 LDFLAGS = 
 
 #-- 파일 목록 정의 --#
-OBJS = $(OBJ_DIR)/user_netlink_hook.o
+OBJS = $(OBJ_DIR)/user_netlink_hook.o\
+       $(OBJ_DIR)/proc_search.o
 
 all: $(TARGET)
 
-#-- 패턴 --#
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/user_netlink_hook.o: $(SRC_DIR)/user_netlink_hook.c\
+	$(HDR_DIR)/proc_search.h
+	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
-	@echo "--- Compile Complete: $<   ->  $@"
+
+
+
+$(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c
+	@echo "---Compiling: $< -> $@"
+	gcc $(CFLAGS) -c -o $@ $<
+
+
+
+#-- 패턴 --#
+#$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+#	gcc $(CFLAGS) -c -o $@ $<
+#	@echo "--- Compile Complete: $<   ->  $@"
 
 $(TARGET): $(OBJS)
 	gcc $(LDFLAGS) -o $@ $^

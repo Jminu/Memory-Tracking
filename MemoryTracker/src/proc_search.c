@@ -45,6 +45,7 @@ long get_proc_mem_info(FILE *status_fd) {
 /*
  * Use Example
  */
+/*
 int main(void) {
 	pid_t pid = 0;
 	printf(">>>");
@@ -54,8 +55,9 @@ int main(void) {
 	long vm_rss = get_proc_mem_info(fd);
 	
 
-	printf("[PID]: %d, [VmRSS]: %ld\n", pid, vm_rss);
+	printf("[PID]: %d, [VmRSS]: %ld [BYTE]: %ld \n", pid, vm_rss, vm_rss * 1024);
 	fclose(fd);
 
 	return 0;
 }
+*/
