@@ -11,7 +11,8 @@ LDFLAGS =
 #-- 파일 목록 정의 --#
 OBJS = $(OBJ_DIR)/user_netlink_hook.o\
        $(OBJ_DIR)/proc_search.o\
-       $(OBJ_DIR)/graph.o
+       $(OBJ_DIR)/graph.o\
+	   $(OBJ_DIR)/mem.o
 
 all: $(TARGET)
 
