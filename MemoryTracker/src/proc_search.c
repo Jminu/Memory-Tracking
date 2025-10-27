@@ -22,13 +22,14 @@ FILE *open_proc_stat(pid_t pid) {
 	status_fd = fopen(full_proc_path, "r");
 	if (status_fd == NULL) {
 		perror("Open Error!");
-		exit(1);	
+		exit(1);
 	}
 	printf("[FILE] /proc/%d/status Open Success!\n", pid);
 	
 	return status_fd;
 }
 
+/*
 MEM_INFO get_proc_mem_info(FILE *status_fd) {
 	char line[MAX_LINE_LENGTH];
 	MEM_INFO mem_info;
@@ -48,6 +49,7 @@ MEM_INFO get_proc_mem_info(FILE *status_fd) {
 	printf("Can't Find VmRSS, VmSize\n");
 	exit(1); // Error
 }
+*/
 
 /*
  * Use Example

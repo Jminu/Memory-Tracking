@@ -188,8 +188,7 @@ void listen_syscall() {
 		hooked_pid = received_data->pid;
 		
 		FILE *fd = open_proc_stat(hooked_pid);
-		MEM_INFO mem_info = get_proc_mem_info(fd);
-		
+		MEM_INFO mem_info = get_mem_info(fd);
 
 		syscall_cnt++;
 
