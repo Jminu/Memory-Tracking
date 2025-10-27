@@ -7,6 +7,7 @@
 #include <linux/netlink.h>
 #include "proc_search.h"
 #include "graph.h"
+#include "type.h"
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
