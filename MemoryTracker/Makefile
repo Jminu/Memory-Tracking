@@ -31,8 +31,10 @@ $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
-
-
+$(OBJ_DIR)/mem.o: $(SRC_DIR)/mem.c\
+	$(HDR_DIR)/type.h
+	@echo "---Compiling: $< -> $@"
+	gcc $(CFLAGS) -c -o $@ $<
 
 #-- 패턴 --#
 #$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
