@@ -10,20 +10,27 @@ LDFLAGS =
 
 #-- 파일 목록 정의 --#
 OBJS = $(OBJ_DIR)/user_netlink_hook.o\
-       $(OBJ_DIR)/proc_search.o
+       $(OBJ_DIR)/proc_search.o\
+       $(OBJ_DIR)/graph.o
 
 all: $(TARGET)
 
 $(OBJ_DIR)/user_netlink_hook.o: $(SRC_DIR)/user_netlink_hook.c\
-	$(HDR_DIR)/proc_search.h
+	$(HDR_DIR)/proc_search.h\
+	$(HDR_DIR)/graph.h
+	@echo "---Compiling: $< -> $@"
+	gcc $(CFLAGS) -c -o $@ $<
+
+$(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c\
+	$(HDR_DIR)/graph.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
 
-
-$(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c
+$(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
+
 
 
 

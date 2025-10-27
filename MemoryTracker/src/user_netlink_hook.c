@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include "proc_search.h"
+#include "graph.h"
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -103,7 +104,7 @@ int set_nl_socket() {
 		return -1;
 	}
 	printf("[USER] Complete Create Socket\n");
-	sleep(3);
+	sleep(1);
 
 	/*
 	 * 	memset으로 src_addr 0으로 초기화
@@ -127,11 +128,11 @@ int set_nl_socket() {
 		return -1;
 	}
 	printf("[USER] Complete Bind\n");
-	sleep(3);
+	sleep(1);
 
 	send_registration(nl_socket_fd, &src_addr); // Kernel쪽에 소켓 등록요청
 	printf("[USER] Registration Complete Netlink Socket to Kernel\n");
-	sleep(3);
+	sleep(1);
 
 	return nl_socket_fd;
 }
@@ -170,7 +171,7 @@ void listen_syscall() {
 	msg.msg_iovlen = 1;
 
 	printf("[USER] Complete Setting\n");
-	sleep(3);
+	sleep(1);
 	printf("[USER] Listening...\n");
 
 	while (1) {
@@ -187,15 +188,18 @@ void listen_syscall() {
 		hooked_pid = received_data->pid;
 		
 		FILE *fd = open_proc_stat(hooked_pid);
-		long vm_rss_byte = get_proc_mem_info(fd) * 1024;
+		MEM_INFO mem_info = get_proc_mem_info(fd);
+		
 
 		syscall_cnt++;
 
 		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
 		printf("[SYSCALL COUNT] : %d\n", syscall_cnt);
-		printf("[BYTE] : %ld\n", vm_rss_byte);
 		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
+		
+		double ratio = get_ratio(mem_info.vm_rss, mem_info.vm_size);
+		print_ratio_graph(ratio);
 	}
 }
 

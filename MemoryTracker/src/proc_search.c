@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+#include "proc_search.h"
+#include "graph.h"
 
 #define MAX_LINE_LENGTH 128
 
@@ -27,19 +29,24 @@ FILE *open_proc_stat(pid_t pid) {
 	return status_fd;
 }
 
-long get_proc_mem_info(FILE *status_fd) {
+MEM_INFO get_proc_mem_info(FILE *status_fd) {
 	char line[MAX_LINE_LENGTH];
+	MEM_INFO mem_info;
 	long vm_rss = -1;
 	char unit[3];
 
 	while (fgets(line, sizeof(line), status_fd) != NULL) {
 		if (strncmp(line, "VmRSS:", 6) == 0) {
 			if (sscanf(line, "VmRSS: %ld %4s", &vm_rss, unit) != 0) {
-				return vm_rss;
+				rewind(status_fd);
+				mem_info.vm_rss = vm_rss;
+				mem_info.vm_size = get_VmSize_size(status_fd);
+				return mem_info;	
 			}
 		}
 	}
-	return -1; // Error
+	printf("Can't Find VmRSS, VmSize\n");
+	exit(1); // Error
 }
 
 /*

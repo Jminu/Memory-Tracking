@@ -3,8 +3,13 @@
 
 #include <stdio.h>
 
+typedef struct mem_info {
+	long vm_rss;
+	long vm_size;
+} MEM_INFO;
+
 FILE *open_proc_stat(pid_t pid);
-long get_proc_mem_info(FILE *status_fd);
+MEM_INFO get_proc_mem_info(FILE *status_fd);
 
 
 #endif
