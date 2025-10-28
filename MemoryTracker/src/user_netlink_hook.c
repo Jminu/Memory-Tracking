@@ -223,6 +223,7 @@ void anal_child(int read_pipe_fd) {
 		if (read(read_pipe_fd, &recv_pid, sizeof(recv_pid)) != -1) {
 			FILE *status_fd = open_proc_stat(recv_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
+			fclose(status_fd);
 			cursor_to(50, 1);
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 		}

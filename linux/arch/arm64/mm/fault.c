@@ -44,6 +44,10 @@
 #include <asm/tlbflush.h>
 #include <asm/traps.h>
 
+#include <linux/netlink.h>
+#include <net/netlink_hook.h>
+
+
 struct fault_info {
 	int	(*fn)(unsigned long far, unsigned long esr,
 		      struct pt_regs *regs);
@@ -542,6 +546,11 @@ static int __kprobes do_page_fault(unsigned long far, unsigned long esr,
 	struct vm_area_struct *vma;
 	int si_code;
 	int pkey = -1;
+
+	printk(KERN_INFO "[JWM] Page Fault %d\n", current->pid);
+	if (system_state == SYSTEM_RUNNING) {
+		nl_send_msg(current->pid);
+	}
 
 	if (kprobe_page_fault(regs, esr))
 		return 0;

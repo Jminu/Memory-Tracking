@@ -269,6 +269,8 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 	vm_fault_t fault;
 	unsigned int flags = FAULT_FLAG_DEFAULT;
 	unsigned long vm_flags = VM_ACCESS_FLAGS;
+	
+	printk(KERN_INFO "Page Fault!! %d \n", current->pid);
 
 	if (kprobe_page_fault(regs, fsr))
 		return 0;

@@ -19,7 +19,8 @@ echo "cpu_startup_entry enabled!"
 #####################################################################
 
 
-echo __arm64_sys_brk > /sys/kernel/debug/tracing/set_ftrace_filter
+
+echo __arm64_sys_write > /sys/kernel/debug/tracing/set_ftrace_filter
 sleep 1
 echo "__arm64_sys_brk  => enabled!"
 
@@ -34,8 +35,8 @@ echo "__arm64_sys_brk  => enabled!"
 #sleep 1
 #echo "sched switch enabled!"
 
-echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable
-echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
+#echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable
+#echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
 
 
 echo 1 > /sys/kernel/debug/tracing/options/func_stack_trace
