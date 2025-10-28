@@ -29,7 +29,8 @@ $(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c\
 	gcc $(CFLAGS) -c -o $@ $<
 
 
-$(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c
+$(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c\
+	$(HDR_DIR)/ui.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 

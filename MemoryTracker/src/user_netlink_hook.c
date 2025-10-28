@@ -9,6 +9,7 @@
 #include "graph.h"
 #include "type.h"
 #include "mem.h"
+#include "ui.h"
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -179,6 +180,8 @@ void listen_syscall() {
 	printf("[USER] Complete Setting\n");
 	sleep(1);
 	printf("[USER] Listening...\n");
+	sleep(1);
+	clear_screen();
 
 	while (1) {
 		int len = recvmsg(nl_socket_fd, &msg, 0);
@@ -195,7 +198,7 @@ void listen_syscall() {
 		if (hooked_pid != pid) {
 			continue;
 		}
-		
+		cursor_to(50, 1);
 		FILE *fd = open_proc_stat(hooked_pid);
 		MEM_INFO mem_info = get_mem_info(fd);
 
