@@ -16,6 +16,10 @@
 #define MAX_PAYLOAD 1024 // max message payload size 
 #define NL_MSG_REG 1
 
+// Pipe
+#define READ_PIPE 0
+#define WRITE_PIPE 1
+
 struct syscall_data {
     pid_t pid;
 };
@@ -140,7 +144,7 @@ static int set_nl_socket() {
 	return nl_socket_fd;
 }
 
-void listen_syscall() {
+void listen_syscall(int write_pipe_fd) {
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
 	struct iovec iov;
@@ -199,9 +203,9 @@ void listen_syscall() {
 			continue;
 		}
 
-		cursor_to(50, 1);
-		FILE *fd = open_proc_stat(hooked_pid);
-		MEM_INFO mem_info = get_mem_info(fd);
+		pid_t cp_pid = hooked_pid;
+		write(write_pipe_fd, &cp_pid, sizeof(cp_pid)); // send hooked_pid to child using pipe
+
 
 		syscall_cnt++;
 
@@ -209,12 +213,43 @@ void listen_syscall() {
 		printf("[SYSCALL COUNT] : %d\n", syscall_cnt);
 		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
-		
-		print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
+	}
+}
+
+void anal_child(int read_pipe_fd) {
+	pid_t recv_pid;
+
+	while (1) {
+		if (read(read_pipe_fd, &recv_pid, sizeof(recv_pid)) != -1) {
+			FILE *status_fd = open_proc_stat(recv_pid);
+			MEM_INFO mem_info = get_mem_info(status_fd);
+			cursor_to(50, 1);
+			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
+		}
 	}
 }
 
 int main(void) {
-	listen_syscall();
+	pid_t pid;
+	int fd[2];
+
+	if (pipe(fd) == -1) {
+		perror("Pipe Error");
+		exit(1);
+	}
+
+	pid = fork();
+	if (pid == 0) { // child
+		close(fd[WRITE_PIPE]);
+		anal_child(fd[READ_PIPE]);
+	}
+	else if (pid == -1) { // error
+		perror("Fork Error");
+	}
+	else { // parent
+		close(fd[READ_PIPE]);
+		listen_syscall(fd[WRITE_PIPE]);
+	}
+
 	return 0;
 }

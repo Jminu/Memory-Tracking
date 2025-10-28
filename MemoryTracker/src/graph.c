@@ -2,7 +2,7 @@
 #include <string.h>
 #include "ui.h"
 
-#define MAX_BAR_LENGTH 50
+#define MAX_BAR_LENGTH 50 
 
 static double get_ratio(long VmRSS, long VmSize) {
 	double ratio = 0;
@@ -23,7 +23,7 @@ void print_ratio_graph(long VmRSS, long VmSize) {
 	clear_line();
 
 	printf("VmRSS: %ld VmSize: %ld ", VmRSS, VmSize);
-	printf("Ratio: %.2f%% ");
+	printf("Ratio: %.2f% ");
 
 	/* draw bar graph */
 	printf(" [");
