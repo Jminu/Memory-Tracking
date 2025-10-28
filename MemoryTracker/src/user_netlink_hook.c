@@ -198,6 +198,7 @@ void listen_syscall() {
 		if (hooked_pid != pid) {
 			continue;
 		}
+
 		cursor_to(50, 1);
 		FILE *fd = open_proc_stat(hooked_pid);
 		MEM_INFO mem_info = get_mem_info(fd);
