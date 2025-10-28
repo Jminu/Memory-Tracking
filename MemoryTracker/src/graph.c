@@ -2,13 +2,15 @@
 #include <string.h>
 #define MAX_BAR_LENGTH 50
 
-double get_ratio(long VmRSS, long VmSize) {
+static double get_ratio(long VmRSS, long VmSize) {
 	double ratio = 0;
 	ratio = ((double)VmRSS / VmSize) * 100;
 	return ratio;
 }
 
-void print_ratio_graph(double ratio) {
+void print_ratio_graph(long VmRSS, long VmSize) {
+	double ratio = get_ratio(VmRSS, VmSize);
+
 	if (ratio < 0) {
 		printf("Ratio Error\n");
 		return;

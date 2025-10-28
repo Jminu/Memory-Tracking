@@ -19,7 +19,7 @@ struct syscall_data {
     pid_t pid;
 };
 
-void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
+static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     struct nlmsghdr *nlh = NULL;
     struct sockaddr_nl dest_addr;
     struct iovec iov;
@@ -85,7 +85,7 @@ void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     free(nlh);
 }
 
-int set_nl_socket() {
+static int set_nl_socket() {
 	int nl_socket_fd;
 	struct sockaddr_nl src_addr;
 	struct sockaddr_nl dest_addr;
@@ -199,8 +199,7 @@ void listen_syscall() {
 		printf("[HOOKED PID] : %d\n", hooked_pid);
 		printf("===========================================\n");
 		
-		double ratio = get_ratio(mem_info.vm_rss, mem_info.vm_size);
-		print_ratio_graph(ratio);
+		print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 	}
 }
 

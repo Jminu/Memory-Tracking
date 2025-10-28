@@ -4,7 +4,7 @@
 
 #define MAX_LINE_LENGTH 128
 
-long get_VmSize(FILE *status_fd) {
+static long get_VmSize(FILE *status_fd) {
     char line[MAX_LINE_LENGTH];
     long vm_size = -1;
     char unit[3];
@@ -19,7 +19,7 @@ long get_VmSize(FILE *status_fd) {
     return -1;
 }
 
-long get_VmRss(FILE *status_fd) {
+static long get_VmRss(FILE *status_fd) {
     char line[MAX_LINE_LENGTH];
     long vm_rss = -1;
     char unit[3];
