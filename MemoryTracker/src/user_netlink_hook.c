@@ -150,6 +150,10 @@ void listen_syscall() {
 	pid_t hooked_pid = -1;
 	struct syscall_data *received_data;
 
+	pid_t pid;
+	printf("[Watch PID]: ");
+	scanf("%d", &pid);
+
 	nl_socket_fd = set_nl_socket(); // get netlink socket fd
 
 	/*
@@ -188,6 +192,9 @@ void listen_syscall() {
 
 		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
 		hooked_pid = received_data->pid;
+		if (hooked_pid != pid) {
+			continue;
+		}
 		
 		FILE *fd = open_proc_stat(hooked_pid);
 		MEM_INFO mem_info = get_mem_info(fd);
