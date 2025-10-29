@@ -276,6 +276,6 @@ void run(FILE *log_fd) {
 	}
 	else { // parent
 		close(fd[READ_PIPE]);
-		listen_syscall(fd[WRITE_PIPE], log_fd);
+		listen_syscall(fd[WRITE_PIPE]);
 	}
 }
