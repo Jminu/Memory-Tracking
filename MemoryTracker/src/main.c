@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
 	char full_path[128];
 
 	strcpy(file_name, argv[1]);
+	printf("%s\n", file_name);
 	snprintf(full_path, sizeof(full_path), "%s%s", dir_name, file_name);
 
 	log_msg("Log파일 경로: %s", full_path);
