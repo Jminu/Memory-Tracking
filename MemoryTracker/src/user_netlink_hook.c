@@ -231,10 +231,8 @@ void anal_child(int read_pipe_fd) {
 			cursor_to(1, 1);
 			log_msg("[RECEIVED]");
 
-			cursor_to(2, 1);
 			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
 
-			cursor_to(3, 1);
 			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 		}
 	}
