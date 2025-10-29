@@ -12,7 +12,8 @@ LDFLAGS =
 OBJS = $(OBJ_DIR)/user_netlink_hook.o\
        $(OBJ_DIR)/proc_search.o\
        $(OBJ_DIR)/graph.o\
-	   $(OBJ_DIR)/mem.o
+       $(OBJ_DIR)/mem.o\
+       $(OBJ_DIR)/log.o
 
 all: $(TARGET)
 
@@ -36,6 +37,10 @@ $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c\
 
 $(OBJ_DIR)/mem.o: $(SRC_DIR)/mem.c\
 	$(HDR_DIR)/type.h
+	@echo "---Compiling: $< -> $@"
+	gcc $(CFLAGS) -c -o $@ $<
+
+$(OBJ_DIR)/log.o: $(SRC_DIR)/log.c
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
