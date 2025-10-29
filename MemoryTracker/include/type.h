@@ -1,6 +1,8 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#include <stdio.h>
+
 typedef struct mem_info {
     long vm_rss;
     long vm_size;
@@ -9,6 +11,6 @@ typedef struct mem_info {
 typedef struct pipe_data {
     pid_t hooked_pid;
     int syscall_cnt;
-} PIPE_DATA
+} PIPE_DATA;
 
 #endif
