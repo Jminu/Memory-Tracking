@@ -1,7 +1,7 @@
 #ifndef TYPE_H
 #define TYPE_H
 
-#include <stdio.h>
+#include <unistd.h>
 
 typedef struct mem_info {
     long vm_rss;
