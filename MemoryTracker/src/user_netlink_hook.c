@@ -211,10 +211,13 @@ void listen_syscall(int write_pipe_fd) {
 
 
 		syscall_cnt++;
-
-		log_msg("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
-		log_msg("[SYSCALL COUNT] : %d\n", syscall_cnt);
-		log_msg("[HOOKED PID] : %d\n", hooked_pid);
+		
+		cursor_to(1, 1);
+		log_msg("[RECEIVED] Received data length : %zu bytes", sizeof(*received_data));
+		cursor_to(2, 1);
+		log_msg("[SYSCALL COUNT] : %d", syscall_cnt);
+		cursor_to(3, 1);
+		log_msg("[HOOKED PID] : %d", hooked_pid);
 	}
 }
 
@@ -226,7 +229,6 @@ void anal_child(int read_pipe_fd) {
 			FILE *status_fd = open_proc_stat(recv_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
-			cursor_to(50, 1);
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 		}
 	}

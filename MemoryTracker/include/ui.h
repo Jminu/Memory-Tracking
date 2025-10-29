@@ -3,9 +3,6 @@
 
 #include <stdio.h>
 
-#define BAR_ROW 3
-#define BAR_COL_START 100 
-
 static inline void cursor_to(int row, int col) {
 	printf("\033[%d;%dH", row, col);
 	fflush(stdout);
