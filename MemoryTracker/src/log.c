@@ -37,3 +37,11 @@ static void get_cur_time() {
 
 	snprintf(t_buf, sizeof(t_buf), "%ld.%03ld", sec, msec);
 }
+
+/*
+ * 실행 시 인자를 받아서
+ * 파일로써 기록할 수 있도록
+ */
+void write_log_to_file() {
+	
+}

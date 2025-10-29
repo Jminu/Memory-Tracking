@@ -147,6 +147,9 @@ static int set_nl_socket() {
 	return nl_socket_fd;
 }
 
+/*
+ *  Parent Proc
+ */
 static void listen_syscall(int write_pipe_fd) {
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
@@ -215,6 +218,7 @@ static void listen_syscall(int write_pipe_fd) {
 }
 
 /*
+ *  Child Proc
  *	proc 디렉토리 탐색 및 UI, Log 출력
  */
 static void anal_child(int read_pipe_fd) {
@@ -227,6 +231,7 @@ static void anal_child(int read_pipe_fd) {
 			clear_line_n2m(1, 50); // (2) - 1열부터 50열까지 지움
 			cursor_to(1, 1); // (3) - 다시 (1, 1)로 이동
 
+			log_msg("%d", recv_pipe_data.hooked_pid);
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
