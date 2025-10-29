@@ -188,7 +188,7 @@ void listen_syscall(int write_pipe_fd) {
 	sleep(1);
 	printf("[USER] Listening...\n");
 	sleep(1);
-	clear_screen();
+	// clear_screen();
 
 	while (1) {
 		int len = recvmsg(nl_socket_fd, &msg, 0);
@@ -221,6 +221,7 @@ void anal_child(int read_pipe_fd) {
 	pid_t recv_pid;
 	PIPE_DATA recv_pipe_data;
 
+	clear_screen();
 	while (1) {
 		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) != -1) { // 부모한테 파이프에서 전달 이벤트 대기
 			cursor_to(1, 1);
