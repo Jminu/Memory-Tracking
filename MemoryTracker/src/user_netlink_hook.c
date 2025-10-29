@@ -227,11 +227,13 @@ void anal_child(int read_pipe_fd) {
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
-			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 
 			log_msg("[RECEIVED]");
 			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
 			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
+
+			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
+
 		}
 	}
 }
