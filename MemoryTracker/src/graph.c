@@ -4,7 +4,7 @@
 #include "log.h"
 
 #define MAX_BAR_LENGTH 50 
-#define BAR_ROW_POS 3
+#define BAR_ROW_POS 1
 #define BAR_COL_POS 100
 
 static double get_ratio(long VmRSS, long VmSize) {
