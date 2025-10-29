@@ -14,7 +14,7 @@ OBJS = $(OBJ_DIR)/user_netlink_hook.o\
        $(OBJ_DIR)/graph.o\
        $(OBJ_DIR)/mem.o\
        $(OBJ_DIR)/log.o\
-       $(OBJ_DIR)/run.o
+       $(OBJ_DIR)/main.o
 
 all: $(TARGET)
 
@@ -50,7 +50,7 @@ $(OBJ_DIR)/log.o: $(SRC_DIR)/log.c
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/run.o: $(SRC_DIR)/run.c\
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c\
 	$(HDR_DIR)/user_netlink_hook.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<

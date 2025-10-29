@@ -1,6 +1,7 @@
 #include "user_netlink_hook.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ui.h"
 #include "log.h"
 
