@@ -21,8 +21,8 @@
 #define READ_PIPE 0
 #define WRITE_PIPE 1
 
-struct syscall_data {
-    pid_t pid;
+static struct syscall_data {
+    pid_t pid
 };
 
 static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
@@ -147,7 +147,7 @@ static int set_nl_socket() {
 	return nl_socket_fd;
 }
 
-void listen_syscall(int write_pipe_fd) {
+static void listen_syscall(int write_pipe_fd) {
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
 	struct iovec iov;
@@ -217,13 +217,13 @@ void listen_syscall(int write_pipe_fd) {
 /*
  *	proc 디렉토리 탐색 및 UI, Log 출력
  */
-void anal_child(int read_pipe_fd) {
+static void anal_child(int read_pipe_fd) {
 	pid_t recv_pid;
 	PIPE_DATA recv_pipe_data;
 
-	clear_screen();
 	while (1) {
 		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) != -1) { // 부모한테 파이프에서 전달 이벤트 대기
+			clear_screen();
 			cursor_to(1, 1);
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
@@ -239,7 +239,7 @@ void anal_child(int read_pipe_fd) {
 	}
 }
 
-int main(void) {
+void run() {
 	pid_t pid;
 	int fd[2];
 
@@ -260,6 +260,4 @@ int main(void) {
 		close(fd[READ_PIPE]);
 		listen_syscall(fd[WRITE_PIPE]);
 	}
-
-	return 0;
 }
