@@ -211,7 +211,7 @@ static void listen_syscall(int write_pipe_fd) {
 		syscall_cnt++;
 
 		PIPE_DATA pipe_data;
-		log_recv("Parent : hooked_pid %d", hooked_pid);
+		log_msg("Parent : hooked_pid %d", hooked_pid);
 		pipe_data.hooked_pid = hooked_pid;
 		pipe_data.syscall_cnt = syscall_cnt;
 		write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct(hooked_pid, syscall_cnt) to child proc
