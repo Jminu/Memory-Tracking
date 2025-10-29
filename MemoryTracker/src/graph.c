@@ -25,11 +25,11 @@ void print_ratio_graph(long VmRSS, long VmSize) {
 	cursor_to(BAR_ROW_POS, BAR_COL_POS);
 	printf("VmRSS: %ld VmSize: %ld", VmRSS, VmSize);
 	cursor_to(BAR_ROW_POS + 1, BAR_COL_POS);
-	printf("Ratio: %.2f% ");
+	printf("Ratio: %.2f%", ratio);
 
 	/* draw bar graph */
 	cursor_to(BAR_ROW_POS + 2, BAR_COL_POS);
-	printf(" [");
+	printf("[");
 
 	int bar_length = ( ratio / 100 ) * MAX_BAR_LENGTH;
 	for (int i = 0; i < bar_length; i++) {
@@ -39,5 +39,5 @@ void print_ratio_graph(long VmRSS, long VmSize) {
 	for (int i = 0; i < MAX_BAR_LENGTH - bar_length; i++) {
 		printf(" ");
 	}
-	printf(" ]\n");
+	printf("]\n");
 }
