@@ -114,7 +114,7 @@ static int set_nl_socket() {
 	}
 	
 	log_msg("Complete Create Socket");
-	sleep(1);
+	// sleep(1);
 
 	/*
 	 * 	memset으로 src_addr 0으로 초기화
@@ -138,11 +138,11 @@ static int set_nl_socket() {
 		return -1;
 	}
 	log_msg("Complete Bind");
-	sleep(1);
+	// sleep(1);
 
 	send_registration(nl_socket_fd, &src_addr); // Kernel쪽에 소켓 등록요청
 	log_msg("Registration Complete Netlink Socket to Kernel");
-	sleep(1);
+	// sleep(1);
 
 	return nl_socket_fd;
 }
@@ -188,7 +188,7 @@ static void listen_syscall(int write_pipe_fd) {
 	msg.msg_iovlen = 1;
 
 	log_msg("Complete Listening Setting");
-	sleep(1);
+	// sleep(1);
 	printf("[USER] Listening...\n");
 	sleep(1);
 	clear_screen();
@@ -200,7 +200,7 @@ static void listen_syscall(int write_pipe_fd) {
 			perror("[USER] Error during recvmsg");
 			free(nlh);
 			close(nl_socket_fd);
-			exit(1);	
+			exit(1);
 		}
 
 		received_data = (struct syscall_data*)NLMSG_DATA(nlh);
@@ -211,7 +211,6 @@ static void listen_syscall(int write_pipe_fd) {
 		syscall_cnt++;
 
 		PIPE_DATA pipe_data;
-		log_msg("Parent : hooked_pid %d", hooked_pid);
 		pipe_data.hooked_pid = hooked_pid;
 		pipe_data.syscall_cnt = syscall_cnt;
 		write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct(hooked_pid, syscall_cnt) to child proc
