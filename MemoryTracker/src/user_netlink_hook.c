@@ -205,31 +205,37 @@ void listen_syscall(int write_pipe_fd) {
 		if (hooked_pid != pid) {
 			continue;
 		}
-
-		pid_t cp_pid = hooked_pid;
-		write(write_pipe_fd, &cp_pid, sizeof(cp_pid)); // send hooked_pid to child using pipe
-
-
 		syscall_cnt++;
-		
-		cursor_to(1, 1);
-		log_msg("[RECEIVED] Received data length : %zu bytes", sizeof(*received_data));
-		cursor_to(2, 1);
-		log_msg("[SYSCALL COUNT] : %d", syscall_cnt);
-		cursor_to(3, 1);
-		log_msg("[HOOKED PID] : %d", hooked_pid);
+
+		PIPE_DATA pipe_data;
+		pipe_data.hooked_pid = hooked_pid;
+		pipe_data.syscall_cnt = syscall_cnt;
+		write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct(hooked_pid, syscall_cnt) to child proc
 	}
 }
 
+/*
+ *	proc 디렉토리 탐색 및 UI, Log 출력
+ */
 void anal_child(int read_pipe_fd) {
 	pid_t recv_pid;
+	PIPE_DATA recv_pipe_data;
 
 	while (1) {
-		if (read(read_pipe_fd, &recv_pid, sizeof(recv_pid)) != -1) {
-			FILE *status_fd = open_proc_stat(recv_pid);
+		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) != -1) { // 부모한테 파이프에서 전달 이벤트 대기
+			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
+
+			cursor_to(1, 1);
+			log_msg("[RECEIVED]");
+
+			cursor_to(2, 1);
+			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
+
+			cursor_to(3, 1);
+			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 		}
 	}
 }
