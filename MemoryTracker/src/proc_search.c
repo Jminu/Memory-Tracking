@@ -5,6 +5,7 @@
 #include <string.h>
 #include "proc_search.h"
 #include "graph.h"
+#include "log.h"
 
 #define MAX_LINE_LENGTH 128
 
@@ -24,7 +25,7 @@ FILE *open_proc_stat(pid_t pid) {
 		perror("Open Error!");
 		exit(1);
 	}
-	printf("[FILE] /proc/%d/status Open Success!\n", pid);
+	log_msg("[FILE] /proc/%d/status Open Success", pid);
 	
 	return status_fd;
 }

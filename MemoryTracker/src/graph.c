@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ui.h"
+#include "log.h"
 
 #define MAX_BAR_LENGTH 50 
 
@@ -14,7 +15,7 @@ void print_ratio_graph(long VmRSS, long VmSize) {
 	double ratio = get_ratio(VmRSS, VmSize);
 
 	if (ratio < 0) {
-		printf("Ratio Error\n");
+		log_msg("Ratio Error");
 		return;
 	}
 

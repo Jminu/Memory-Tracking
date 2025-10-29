@@ -10,6 +10,7 @@
 #include "type.h"
 #include "mem.h"
 #include "ui.h"
+#include "log.h"
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -84,7 +85,7 @@ static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     if (sendmsg(nl_socket_fd, &msg, 0) < 0) {
         perror("[USER] Error: Failed to send registration message");
     } else {
-        printf("[USER] Registration message sent successfully (PID: %d).\n", src_addr->nl_pid);
+	    log_msg("Registration message sent successfully (PID: %d)", src_addr->nl_pid);
     }
 
     free(nlh);
@@ -104,13 +105,15 @@ static int set_nl_socket() {
 	 *	use AF_NETLINK, SOCK_RAW, NETLINK_JMW=protocol 30
 	 *
 	 */
-	printf("[USER] Creating Netlink Listener (protocol : %d)\n", NETLINK_JMW);
+
+	log_msg("Creating Netlink Listener (protocal: %d)", NETLINK_JMW);
 	nl_socket_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_JMW); // netlink socket fd 생성
 	if (nl_socket_fd < 0) {
 		perror("[USER] Error : Failed to create Netlink Socket");
 		return -1;
 	}
-	printf("[USER] Complete Create Socket\n");
+	
+	log_msg("Complete Create Socket");
 	sleep(1);
 
 	/*
@@ -134,11 +137,11 @@ static int set_nl_socket() {
 		close(nl_socket_fd);
 		return -1;
 	}
-	printf("[USER] Complete Bind\n");
+	log_msg("Complete Bind");
 	sleep(1);
 
 	send_registration(nl_socket_fd, &src_addr); // Kernel쪽에 소켓 등록요청
-	printf("[USER] Registration Complete Netlink Socket to Kernel\n");
+	log_msg("Registration Complete Netlink Socket to Kernel");
 	sleep(1);
 
 	return nl_socket_fd;
@@ -181,7 +184,7 @@ void listen_syscall(int write_pipe_fd) {
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-	printf("[USER] Complete Setting\n");
+	log_msg("Complete Listening Setting");
 	sleep(1);
 	printf("[USER] Listening...\n");
 	sleep(1);
@@ -209,10 +212,9 @@ void listen_syscall(int write_pipe_fd) {
 
 		syscall_cnt++;
 
-		printf("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
-		printf("[SYSCALL COUNT] : %d\n", syscall_cnt);
-		printf("[HOOKED PID] : %d\n", hooked_pid);
-		printf("===========================================\n");
+		log_msg("[RECEIVED] Received data length : %zu bytes\n", sizeof(*received_data));
+		log_msg("[SYSCALL COUNT] : %d\n", syscall_cnt);
+		log_msg("[HOOKED PID] : %d\n", hooked_pid);
 	}
 }
 

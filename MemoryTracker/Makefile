@@ -20,18 +20,21 @@ all: $(TARGET)
 $(OBJ_DIR)/user_netlink_hook.o: $(SRC_DIR)/user_netlink_hook.c\
 	$(HDR_DIR)/proc_search.h\
 	$(HDR_DIR)/graph.h\
-	$(HDR_DIR)/mem.h
+	$(HDR_DIR)/mem.h\
+	$(HDR_DIR)/log.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c\
-	$(HDR_DIR)/graph.h
+	$(HDR_DIR)/graph.h\
+	$(HDR_DIR)/log.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
 
 $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c\
-	$(HDR_DIR)/ui.h
+	$(HDR_DIR)/ui.h\
+	$(HDR_DIR)/log.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
