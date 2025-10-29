@@ -235,9 +235,11 @@ static void anal_child(int read_pipe_fd) {
 			log_msg("[RECEIVED]");
 
 			clear_line_n2m(1, 50);
+			cursor_to(3, 1);
 			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
 
 			clear_line_n2m(1, 50);
+			cursor_to(4, 1);
 			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
