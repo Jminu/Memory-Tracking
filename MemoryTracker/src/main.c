@@ -26,6 +26,6 @@ int main(int argc, char *argv[]) {
 		perror("Log file open error");
 		return 1;
 	}
-	
-	run();
+
+	run(log_fd);
 }

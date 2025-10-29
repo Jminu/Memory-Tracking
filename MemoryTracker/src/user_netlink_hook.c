@@ -221,7 +221,7 @@ static void listen_syscall(int write_pipe_fd) {
  *  Child Proc
  *	proc 디렉토리 탐색 및 UI, Log 출력
  */
-static void anal_child(int read_pipe_fd) {
+static void anal_child(int read_pipe_fd, FILE *log_fd) {
 	pid_t recv_pid;
 	PIPE_DATA recv_pipe_data;
 
@@ -237,15 +237,15 @@ static void anal_child(int read_pipe_fd) {
 
 			clear_line_n2m(1, 50);
 			cursor_to(2, 1);
-			log_msg("[RECEIVED]");
+			log_msg_file(log_fd, "[RECEIVED]");
 
 			clear_line_n2m(1, 50);
 			cursor_to(3, 1);
-			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
+			log_msg_file(log_fd, "[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
 
 			clear_line_n2m(1, 50);
 			cursor_to(4, 1);
-			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
+			log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 
@@ -253,7 +253,11 @@ static void anal_child(int read_pipe_fd) {
 	}
 }
 
-void run() {
+/*
+ *	log_fd가 가리키는 파일에 로그를 남긴다.
+ *	fork 사용하면서, parent에서는 이벤트 감지, child에서는 로그 출력 및 그래프 출력
+ */
+void run(FILE *log_fd) {
 	pid_t pid;
 	int fd[2];
 
@@ -265,13 +269,13 @@ void run() {
 	pid = fork();
 	if (pid == 0) { // child
 		close(fd[WRITE_PIPE]);
-		anal_child(fd[READ_PIPE]);
+		anal_child(fd[READ_PIPE], log_fd);
 	}
 	else if (pid == -1) { // error
 		perror("Fork Error");
 	}
 	else { // parent
 		close(fd[READ_PIPE]);
-		listen_syscall(fd[WRITE_PIPE]);
+		listen_syscall(fd[WRITE_PIPE], log_fd);
 	}
 }
