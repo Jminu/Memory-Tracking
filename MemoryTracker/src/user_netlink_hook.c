@@ -188,6 +188,7 @@ static void listen_syscall(int write_pipe_fd) {
 	sleep(1);
 	printf("[USER] Listening...\n");
 	sleep(1);
+	clear_screen();
 
 	while (1) {
 		int len = recvmsg(nl_socket_fd, &msg, 0);
