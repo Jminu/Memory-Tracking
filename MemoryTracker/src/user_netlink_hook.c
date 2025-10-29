@@ -223,16 +223,14 @@ void anal_child(int read_pipe_fd) {
 
 	while (1) {
 		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) != -1) { // 부모한테 파이프에서 전달 이벤트 대기
+			cursor_to(1, 1);
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size);
 
-			cursor_to(1, 1);
 			log_msg("[RECEIVED]");
-
 			log_msg("[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
-
 			log_msg("[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 		}
 	}

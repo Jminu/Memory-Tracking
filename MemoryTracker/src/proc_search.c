@@ -6,6 +6,7 @@
 #include "proc_search.h"
 #include "graph.h"
 #include "log.h"
+#include "ui"
 
 #define MAX_LINE_LENGTH 128
 
