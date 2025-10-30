@@ -23,6 +23,7 @@
 
 static struct syscall_data {
     pid_t pid
+	char syscall_name[10];
 };
 
 static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
@@ -159,6 +160,8 @@ static void listen_syscall(int write_pipe_fd) {
 	static int syscall_cnt = 0;
 
 	pid_t hooked_pid = -1;
+	char hooked_syscall[10];
+
 	struct syscall_data *received_data;
 
 	pid_t pid;
@@ -208,10 +211,13 @@ static void listen_syscall(int write_pipe_fd) {
 		if (hooked_pid != pid) {
 			continue;
 		}
+
+		strcpy(hooked_syscall, received_data->syscall_name);
 		syscall_cnt++;
 
 		PIPE_DATA pipe_data;
 		pipe_data.hooked_pid = hooked_pid;
+		strcpy(pipe_data.syscall_name, hooked_syscall);
 		pipe_data.syscall_cnt = syscall_cnt;
 
 		int written_bytes;
@@ -243,7 +249,7 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 
 			clear_line_n2m(1, 50);
 			cursor_to(2, 1);
-			log_msg_file(log_fd, "[RECEIVED]");
+			log_msg_file(log_fd, "[RECEIVED] %s", recv_pipe_data.syscall_name);
 
 			clear_line_n2m(1, 50);
 			cursor_to(3, 1);

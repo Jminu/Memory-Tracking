@@ -11,6 +11,7 @@ typedef struct mem_info {
 typedef struct pipe_data {
     pid_t hooked_pid;
     int syscall_cnt;
+    char syscall_name[10];
 } PIPE_DATA;
 
 #endif
