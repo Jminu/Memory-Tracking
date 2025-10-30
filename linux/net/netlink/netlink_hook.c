@@ -20,7 +20,7 @@ MODULE_AUTHOR("JMW");
 struct sock *netlink_socket = NULL;
 static pid_t monitor_pid = 0;
 
-static typedef struct syscall_data {
+typedef struct syscall_data {
 	pid_t pid;
 	char name[SYSCALL_NAME_LENGTH]; // system call name
 } SYSCALL_DATA;
@@ -36,7 +36,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 
 	data.pid = pid;
 	strncpy(data.name, syscall_name, SYSCALL_NAME_LENGTH - 1); // 'b' 'r' 'k' '\0' '\0' '\0' '\0' '\0' '\0'
-	data.name[SYSCALL_NAME_LENGTH - 1] = '\0' // 예외의 경우
+	data.name[SYSCALL_NAME_LENGTH - 1] = '\0'; // 예외의 경우
 
 	int data_length = sizeof(data);
 
@@ -90,7 +90,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 
 EXPORT_SYMBOL(nl_send_msg);
 
-void nl_recv_msg(struct sk_buff *skb) //인자로 메세지 버퍼 받음
+static void nl_recv_msg(struct sk_buff *skb) //인자로 메세지 버퍼 받음
 {
 	/*
 	 * monitor_pid(결과를 보낼 pid)를 설정

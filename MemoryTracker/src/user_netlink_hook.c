@@ -254,7 +254,6 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 			log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
-
 		}
 	}
 }
