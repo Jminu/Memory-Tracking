@@ -32,6 +32,7 @@ void log_msg_file(FILE *log_fd, const char *format, ...) {
 	 *	log file에 write
 	 */
 	va_start(args, format);
+	fprintf(log_fd, "[%s] ", t_buf);
 	vfprintf(log_fd, format, args);
 	va_end(args);
 	fprintf(log_fd, "\n");
