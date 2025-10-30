@@ -9,7 +9,7 @@
 #include <net/net_namespace.h>
 #include <net/sock.h>
 #include <linux/pid.h>
-#include <string.h>
+#include <linux/string.h>
 
 #define NETLINK_JMW 30
 #define SYSCALL_NAME_LENGTH 10
