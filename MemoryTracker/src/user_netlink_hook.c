@@ -22,7 +22,7 @@
 #define WRITE_PIPE 1
 
 static struct syscall_data {
-    pid_t pid
+    pid_t pid;
 	char syscall_name[10];
 };
 
