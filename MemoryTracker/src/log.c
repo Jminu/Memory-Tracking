@@ -38,7 +38,7 @@ void log_msg_file(FILE *log_fd, const char *format, ...) {
 	fflush(log_fd);
 }
 
-void log_msg(FILE *log_fd, const char *format, ...) {
+void log_msg(const char *format, ...) {
 	va_list args; // 가변인자 목록 포인터
 	va_start(args, format);
 
