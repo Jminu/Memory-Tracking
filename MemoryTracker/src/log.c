@@ -8,8 +8,7 @@ static char t_buf[64];
 static void get_cur_time();
 
 /*
- *	가변인자 타입
- *	argc: 가변인자 수
+ *	로그 메세지 출력하고 로그 파일에 기록
  */
 void log_msg_file(FILE *log_fd, const char *format, ...) {
 	va_list args; // 가변인자 목록 포인터
@@ -39,6 +38,9 @@ void log_msg_file(FILE *log_fd, const char *format, ...) {
 	fflush(log_fd);
 }
 
+/*
+ *	로그메세지 출력 파일기록 X
+ */
 void log_msg(const char *format, ...) {
 	va_list args; // 가변인자 목록 포인터
 	va_start(args, format);

@@ -23,11 +23,11 @@ void print_ratio_graph(long VmRSS, long VmSize, FILE *log_fd) {
 
 	/* move cursor and log msg*/
 	cursor_to(BAR_ROW_POS, BAR_COL_POS);
-	printf("VmRSS: %ld VmSize: %ld", VmRSS, VmSize);
+	// printf("VmRSS: %ld VmSize: %ld", VmRSS, VmSize);
 	log_msg_file(log_fd, "VmRSS: %ld VmSize: %ld", VmRSS, VmSize);
 
 	cursor_to(BAR_ROW_POS + 1, BAR_COL_POS);
-	printf("Ratio: %.2f%%", ratio);
+	// printf("Ratio: %.2f%%", ratio);
 	log_msg_file(log_fd, "Ratio: %.2f%%", ratio);
 
 	/* draw bar graph */
