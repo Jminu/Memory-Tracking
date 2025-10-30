@@ -217,7 +217,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	 *	시스템이 부팅완료된 후, brk 호출 시 유저 단으로 current->pid 전송
 	 */
 	if (system_state == SYSTEM_RUNNING) {
-		nl_send_msg(cur_pid);
+		nl_send_msg(cur_pid, "brk");
 	}
 
 success:
@@ -567,7 +567,7 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 	 *	시스템이 부팅완료된 후, mmap 호출 시 유저 단으로 current->pid 전송
 	 */
 	if (system_state == SYSTEM_RUNNING) {
-		nl_send_msg(current->pid);
+		nl_send_msg(current->pid, "mmap");
 	}
 out_fput:
 	if (file)
@@ -1671,7 +1671,7 @@ static int __vm_munmap(unsigned long start, size_t len, bool unlock)
 	 *	시스템이 부팅완료된 후, munmap 호출 시 유저 단으로 current->pid 전송
 	 */
 	if (system_state == SYSTEM_RUNNING) {
-		nl_send_msg(current->pid);
+		nl_send_msg(current->pid, "munmap");
 	}
 
 	return ret;

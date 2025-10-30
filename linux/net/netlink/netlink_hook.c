@@ -9,9 +9,10 @@
 #include <net/net_namespace.h>
 #include <net/sock.h>
 #include <linux/pid.h>
+#include <string.h>
 
 #define NETLINK_JMW 30
-#define SYSCALL_NAME 10
+#define SYSCALL_NAME_LENGTH 10
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("JMW");
@@ -19,24 +20,25 @@ MODULE_AUTHOR("JMW");
 struct sock *netlink_socket = NULL;
 static pid_t monitor_pid = 0;
 
-struct syscall_data {
+static typedef struct syscall_data {
 	pid_t pid;
-	char name[SYSCALL_NAME]; // system call name
-};
+	char name[SYSCALL_NAME_LENGTH]; // system call name
+} SYSCALL_DATA;
 
 /*
  *	메세지 전송 : Kernel to User
  */
-void nl_send_msg(pid_t pid)
+void nl_send_msg(pid_t pid, const char *syscall_name)
 {
-	struct syscall_data data;
+	SYSCALL_DATA data;
 	struct sk_buff *skb_out;
 	struct nlmsghdr *nlh;
 
 	data.pid = pid;
+	strncpy(data.name, syscall_name, SYSCALL_NAME_LENGTH - 1); // 'b' 'r' 'k' '\0' '\0' '\0' '\0' '\0' '\0'
+	data.name[SYSCALL_NAME_LENGTH - 1] = '\0' // 예외의 경우
+
 	int data_length = sizeof(data);
-
-
 
 	/*
 	 * nlmsg_new : Allocate a new netlink message
