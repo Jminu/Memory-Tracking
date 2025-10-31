@@ -11,6 +11,7 @@
 #include "mem.h"
 #include "ui.h"
 #include "log.h"
+#include <errno.h>
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -157,8 +158,6 @@ static void listen_syscall(int write_pipe_fd) {
 	struct iovec iov;
 	struct msghdr msg;
 
-	static int syscall_cnt = 0;
-
 	pid_t hooked_pid = -1;
 	char hooked_syscall[10];
 
@@ -213,21 +212,26 @@ static void listen_syscall(int write_pipe_fd) {
 		}
 
 		strcpy(hooked_syscall, received_data->syscall_name);
-		syscall_cnt++;
 
 		PIPE_DATA pipe_data;
 		pipe_data.hooked_pid = hooked_pid;
 		strcpy(pipe_data.syscall_name, hooked_syscall);
-		pipe_data.syscall_cnt = syscall_cnt;
 
 		int written_bytes;
-		written_bytes = write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct(hooked_pid, syscall_cnt) to child proc
+		written_bytes = write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct to child proc
 		if (written_bytes == -1) {
-			perror("Write Error");
-			exit(1);
+			if (errno == EPIPE) { // 자식파이프 close 일 때
+				printf("[PARENT] Child Proc Terminated\n");
+				break;
+			}
+			else { // 쓰기 에러
+				perror("Write Error");
+				close(write_pipe_fd);
+				break;
+			}
 		}
 	}
-}
+} 
 
 /*
  *  Child Proc
@@ -244,12 +248,19 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 	static long cnt_page_fault = 0;
 
 	while (1) {
-		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) > 0) { // 부모한테 파이프에서 전달 이벤트 대기
+		int read_bytes = read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data));
+		
+		if (read_bytes > 0) { // 부모한테 파이프에서 전달 이벤트 대기
 			cursor_to(1, 1); // (1) - (1, 1)로 이동
 			clear_line_n2m(1, 50); // (2) - 1열부터 50열까지 지움
 			cursor_to(1, 1); // (3) - 다시 (1, 1)로 이동
 
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
+			if (status_fd == NULL) {
+				cursor_to(8, 1);
+				log_msg("Process Terminated");
+				break;
+			}
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
 
@@ -276,11 +287,17 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 
 			clear_line_n2m(1, 50);
 			cursor_to(4, 1);
-			log_msg_file(log_fd, "[brk]: %d [mmap]: %d [munmap]: %d [page fault]: %d", cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault);
+			log_msg_file(log_fd, "[brk]: %ld [mmap]: %ld [munmap]: %ld [page fault]: %ld", cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
 		}
+		else {
+			printf("[CHILD] Parent proc error\n");
+			break;
+		}
 	}
+	cursor_to(9, 1);
+	printf("[CHILD] Child Proc 종료..\n");
 }
 
 /*

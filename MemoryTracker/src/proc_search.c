@@ -6,6 +6,7 @@
 #include "proc_search.h"
 #include "graph.h"
 #include "log.h"
+#include "ui.h"
 
 #define MAX_LINE_LENGTH 128
 
@@ -22,8 +23,8 @@ FILE *open_proc_stat(pid_t pid) {
 
 	status_fd = fopen(full_proc_path, "r");
 	if (status_fd == NULL) {
-		perror("Open Error!");
-		exit(1);
+		// cusor_to(8, 1);
+		return NULL; // exit(1)은 프로그램이 그냥 죽어버림, 따라서 NULL리턴
 	}
 	log_msg("[FILE] /proc/%d/status Open Success", pid);
 	

@@ -30,7 +30,8 @@ $(OBJ_DIR)/user_netlink_hook.o: $(SRC_DIR)/user_netlink_hook.c\
 
 $(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c\
 	$(HDR_DIR)/graph.h\
-	$(HDR_DIR)/log.h
+	$(HDR_DIR)/log.h\
+	$(HDR_DIR)/ui.h
 	@echo "---Compiling: $< -> $@"
 	gcc $(CFLAGS) -c -o $@ $<
 
