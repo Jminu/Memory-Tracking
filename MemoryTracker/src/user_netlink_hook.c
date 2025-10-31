@@ -237,6 +237,12 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 	pid_t recv_pid;
 	PIPE_DATA recv_pipe_data;
 
+	static long cnt_total = 0;
+	static long cnt_brk = 0;
+	static long cnt_mmap = 0;
+	static long cnt_munmap = 0;
+	static long cnt_page_fault = 0;
+
 	while (1) {
 		if (read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)) > 0) { // 부모한테 파이프에서 전달 이벤트 대기
 			cursor_to(1, 1); // (1) - (1, 1)로 이동
@@ -247,17 +253,30 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 			MEM_INFO mem_info = get_mem_info(status_fd);
 			fclose(status_fd);
 
+			if (strcmp(recv_pipe_data.syscall_name, "brk") == 0) {
+				cnt_brk++;
+			}
+			else if (strcmp(recv_pipe_data.syscall_name, "mmap") == 0) {
+				cnt_mmap++;
+			}
+			else if (strcmp(recv_pipe_data.syscall_name, "munmap") == 0) {
+				cnt_munmap++;
+			}
+			else {
+				cnt_page_fault++;
+			}
+
 			clear_line_n2m(1, 50);
 			cursor_to(2, 1);
 			log_msg_file(log_fd, "[RECEIVED] %s", recv_pipe_data.syscall_name);
 
 			clear_line_n2m(1, 50);
 			cursor_to(3, 1);
-			log_msg_file(log_fd, "[SYSCALL COUNT] %d", recv_pipe_data.syscall_cnt);
+			log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
 
 			clear_line_n2m(1, 50);
 			cursor_to(4, 1);
-			log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
+			log_msg_file(log_fd, "[brk]: %d [mmap]: %d [munmap]: %d [page fault]: %d", cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
 		}
