@@ -12,6 +12,7 @@
 #include "ui.h"
 #include "log.h"
 #include <errno.h>
+#include <signal.h>
 
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
@@ -153,6 +154,8 @@ static int set_nl_socket() {
  *  Parent Proc
  */
 static void listen_syscall(int write_pipe_fd) {
+	signal(SIGPIPE, SIG_IGN); // SIGPIPE 시그널(자식 종료 시그널) 무시
+
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
 	struct iovec iov;
@@ -221,7 +224,7 @@ static void listen_syscall(int write_pipe_fd) {
 		written_bytes = write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct to child proc
 		if (written_bytes == -1) {
 			if (errno == EPIPE) { // 자식파이프 close 일 때
-				printf("[PARENT] Child Proc Terminated\n");
+				printf("[PARENT] Child Process Terminated\n");
 				break;
 			}
 			else { // 쓰기 에러
@@ -231,6 +234,7 @@ static void listen_syscall(int write_pipe_fd) {
 			}
 		}
 	}
+	printf("[Parent] Listen Exiting...\n");
 } 
 
 /*
@@ -258,7 +262,7 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			if (status_fd == NULL) {
 				cursor_to(8, 1);
-				log_msg("Process Terminated");
+				printf("Process Terminated\n");
 				break;
 			}
 			MEM_INFO mem_info = get_mem_info(status_fd);

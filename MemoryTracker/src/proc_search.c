@@ -26,7 +26,7 @@ FILE *open_proc_stat(pid_t pid) {
 		// cusor_to(8, 1);
 		return NULL; // exit(1)은 프로그램이 그냥 죽어버림, 따라서 NULL리턴
 	}
-	log_msg("[FILE] /proc/%d/status Open Success", pid);
+	log_msg("[FILE] /proc/%d/status Open Success", pid); // (1, 1)에 출력
 	
 	return status_fd;
 }
