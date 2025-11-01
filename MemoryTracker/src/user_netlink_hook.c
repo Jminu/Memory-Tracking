@@ -153,7 +153,7 @@ static int set_nl_socket() {
 /*
  *  Parent Proc
  */
-static void listen_syscall(int write_pipe_fd) {
+static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 	signal(SIGPIPE, SIG_IGN); // SIGPIPE 시그널(자식 종료 시그널) 무시
 
 	int nl_socket_fd = 0;
@@ -198,8 +198,20 @@ static void listen_syscall(int write_pipe_fd) {
 	sleep(1);
 	clear_screen();
 
+	/*
+	 *	자식프로세스 /proc/[child_pid]경로 생성
+	 */
+	char proc_num[16];
+	sprintf(proc_num, "%d", child_pid);
+	char child_proc_path[64];
+	snprintf(child_proc_path, sizeof(child_proc_path), "/proc/%s", proc_num);
+
 	while (1) {
-		int len = recvmsg(nl_socket_fd, &msg, 0);
+		if (access(child_proc_path, F_OK) == -1) { // /proc/[child_pid]가 없다면
+			break;
+		}
+
+		int len = recvmsg(nl_socket_fd, &msg, 0); // 커널에서 메세지 대기중..
 
 		if (len < 0) {
 			perror("[USER] Error during recvmsg");
@@ -327,6 +339,6 @@ void run(FILE *log_fd) {
 	}
 	else { // parent
 		close(fd[READ_PIPE]);
-		listen_syscall(fd[WRITE_PIPE]);
+		listen_syscall(fd[WRITE_PIPE], pid); // 부모가 자식 pid도 받음
 	}
 }

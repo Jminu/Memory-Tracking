@@ -67,3 +67,4 @@ static void get_cur_time() {
 
 	snprintf(t_buf, sizeof(t_buf), "%ld.%03ld", sec, msec);
 }
+
