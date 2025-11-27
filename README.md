@@ -64,10 +64,3 @@ Linux 커널의 메모리 관리 시스템 콜을 실시간으로 후킹하여 �
   + Process1에서 전달받은 데이터 활용, /proc/[PID]탐색 후 status 정보 파싱
   + UI출력 및 로깅
  
-
-### 실행 화면
-<img width="587" height="134" alt="스크린샷 2025-11-02 오후 11 25 09" src="https://github.com/user-attachments/assets/cbd7aeee-bd10-4bbc-80e8-af1bb17f2b50" />
-
-
-### 생성된 로그
-<img width="583" height="359" alt="스크린샷 2025-11-02 오후 11 26 48" src="https://github.com/user-attachments/assets/f19b2c84-0759-40dd-9ffa-b239a4b13d75" />
