@@ -5,49 +5,57 @@ Linux 커널의 메모리 관리 시스템 콜을 실시간으로 후킹하여 �
 
 ## 프로젝트 배경
 
-### 문제 인식
-+ 기존 ptrace 기반 메모리 모니터링 도구의 한계
+### 문제 인식: ptrace 방식의 한계
 + 타겟 프로세스가 매 시스템 콜마다 정지
 + 실시간 모니터링 불가능
-+ 타겟 CPU아키텍쳐마다 시스템콜 저장 레지스터가 다름
++ CPU 아키텍쳐 의존성 (ARM64 vs x86 레지스터 차이)
 
-### 해결 방안
+### 해결 방안: 커널 레벨 후킹 
 + 메모리 관리 핵심 시스템 콜 직접 수정 (brk, mmap, munmap, page_fault)
 + Netlink 소켓 기반 커널-유저 공간 통신
-+ 멀티프로세스 + Non-blocking 파이프로 고부하 환경 대응
++ 멀티프로세스 역할 분리
++ Non-blocking 파이프로 고부하 환경 대응
+
+### 성과
++ 처리량: 초당 약 1,600개 이벤트 안정적 처리
++ 실시간성 확보
++ 안정성: 고부하 시 데이터 드롭으로 시스템 보호
 
 ## 주요 기능
 
 ### 1. 실시간 메모리 추적
-+ brk
-+ mmap
-+ munmap
-+ page fault
++ brk - 힙 영역 확장
++ mmap - 메모리 매핑
++ munmap - 메모리 해제
++ page fault - 페이지 폴트
 
 ### 2. 상세 메모리 정보
 + VmSize - 가상 메모리 크기
 + VmRSS - 실제 물리 메모리 사용량
 + VmData - 힙 영역 크기
 + 실시간 메모리 사용률 그래프
++ 시스템 콜 횟수 (brk/mmap/munmap/page_fault)
 
 ### 3. 고성능 아키텍쳐
 + 커널 레벨 후킹
 + Netlink 소켓 비동기 통신
 + 멀티프로세스 구조
-+ Non-blocking 파이프 + 흐름제어
++ Non-blocking 파이프 + 흐름제어 (넷링크 큐 포화 대응)
 
 ## 구조
+<img width="612" height="383" alt="그림1" src="https://github.com/user-attachments/assets/722d9325-f275-40fc-a521-e5f91cf5dcef" />
+
 ### Kernel
-+ netlink socket 드라이버 구현
-+ 시스템 콜 발생 시 유저단으로 소켓 통신
++ Netlink Socket 빌트인 모듈 구현
++ 시스템 콜 발생 시 유저단으로 시스템 콜 정보 전송
 
 ### User
-+ 멀티프로세싱 (Proc1, Proc2)
-+ Proc1
++ 멀티프로세싱 (Process1, Process2)
++ Process1
   + 커널에서 소켓 송신 대기
-  + 정보를 pipe 통해서 Proc2로 전달
-+ Proc2
-  + Proc1에서 전달받은 데이터 활용, /proc/[PID]탐색 후 status 정보 파싱
+  + 정보를 pipe 통해서 Process2로 전달
++ Process2
+  + Process1에서 전달받은 데이터 활용, /proc/[PID]탐색 후 status 정보 파싱
   + UI출력 및 로깅
  
 
