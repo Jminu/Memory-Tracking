@@ -2,6 +2,12 @@
 **Real-time Process Memory Profiler with Kernel-level System Call Hooking**
 
 Linux 커널의 메모리 관리 시스템 콜을 실시간으로 후킹하여 프로세스의 메모리 사용 패턴을 추적하는 프로파일링 도구
+### 실시간 측정
+![테스트영상](https://github.com/user-attachments/assets/1c70449a-d5c2-4cf2-b4df-3983364b5d11)
+
+### 로그 기록
+![화면 기록 2025-11-28 오전 2 02 43](https://github.com/user-attachments/assets/184212f7-785d-481a-916d-5c5c16984556)
+
 
 ## 프로젝트 배경
 
