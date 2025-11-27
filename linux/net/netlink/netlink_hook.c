@@ -18,7 +18,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("JMW");
 
 struct sock *netlink_socket = NULL;
-static pid_t monitor_pid = 0;
+static pid_t target_pid = 0;
 
 typedef struct syscall_data {
 	pid_t pid;
@@ -27,6 +27,13 @@ typedef struct syscall_data {
 
 /*
  *	메세지 전송 : Kernel to User
+ *	다음의 순서를 따른다.
+ *	
+ *	1. 버퍼 할당
+ *	2. 헤더 추가
+ *	3. 페이로드 복사
+ *	4. 컨트롤 블록 설정
+ *	5. 전송
  */
 void nl_send_msg(pid_t pid, const char *syscall_name)
 {
@@ -41,7 +48,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	int data_length = sizeof(data);
 
 	/*
-	 * nlmsg_new : Allocate a new netlink message
+	 * nlmsg_new : Allocate a new netlink message buffer
 	 *
 	 * data_length : payload
 	 * GFP_KERNEL : type of memory to allocate
@@ -56,8 +63,8 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * nlmsg_put : add new netlink message to an skb (skb : socket buffer)
 	 *
 	 * skb_out : socket buffer to store message in
-	 * port id : 
-	 * seq : 
+	 * port id : sending process Port ID (보내려는 프로세스의 pid)
+	 * seq : sequence number
 	 * NETLINK_JMW : message type
 	 * data_length : length of payload
 	 * flag : 
@@ -74,15 +81,20 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 */
 	memcpy(nlmsg_data(nlh), &data, data_length); // payload 포인터에 data_length만큼 data copy
 
-	NETLINK_CB(skb_out).dst_group = 0;
+	// NETLINK_CB(skb_out).dst_group = 0;
 
 	/*
 	 * nlmsg_unicast : 특정 pid와 1:1통신
 	 * netlink_socket : 메세지 보내는 데 사용할 커널 Netlink Socket pointer
-	 * skb_out : message buffer (헤더랑 payload 담김)a
-	 * monitor_pid : 대상 프로세스 PID (아마 동적으로 설정할 필요가 있을듯)
+	 * skb_out : message buffer (헤더랑 payload 담김)
+	 * monitor_pid : 대상 프로세스 PID -> 도착 소켓의 Port ID
 	 */
-	int ret = nlmsg_unicast(netlink_socket, skb_out, monitor_pid); // unicast : 1:1통신
+
+	if (target_pid == 0) { // 아직 수신자 등록 안되었을 때
+		return;
+	}
+
+	int ret = nlmsg_unicast(netlink_socket, skb_out, target_pid); // unicast : 1:1통신
 	if (ret < 0) {
 		printk(KERN_ERR "[JMW] Netlink send error!\n");
 	}
@@ -95,7 +107,6 @@ static void nl_recv_msg(struct sk_buff *skb) //인자로 메세지 버퍼 받음
 	/*
 	 * monitor_pid(결과를 보낼 pid)를 설정
 	 */
-
 	struct nlmsghdr *nlh;
 	pid_t sender_pid;
 
@@ -106,8 +117,8 @@ static void nl_recv_msg(struct sk_buff *skb) //인자로 메세지 버퍼 받음
 	sender_pid = nlh->nlmsg_pid; // get sender's pid
 
 	if (sender_pid != 0) {
-		monitor_pid = sender_pid;
-		printk(KERN_INFO "[JMW] Monitor pid is : %d\n", monitor_pid);
+		target_pid = sender_pid;
+		printk(KERN_INFO "[JMW] Monitor pid is : %d\n", target_pid);
 	}
 	else {
 		printk(KERN_WARNING "[JMW] sender_pid = 0");
@@ -126,7 +137,7 @@ static int __init netlink_init(void)
 	netlink_socket = netlink_kernel_create(&init_net, NETLINK_JMW, &config);
 	if (!netlink_socket) {
 		printk(KERN_INFO "[JMW] Netlink Socket creation failed!\n");
-		return ENOMEM;	
+		return -ENOMEM;	
 	}
 
 	printk(KERN_INFO "[JMW] Netlink Socket creation success!\n");
