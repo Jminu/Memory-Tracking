@@ -33,7 +33,7 @@ static struct timeval start_tv;
 static struct timeval end_tv;
 
 
-static struct syscall_data {
+struct syscall_data {
     pid_t pid;
 	char syscall_name[10];
 };
@@ -44,12 +44,14 @@ static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     struct iovec iov;
     struct msghdr msg;
 
-    char *reg_msg = "REGISTER_APP";
+    char *reg_msg = "register app";
     int reg_len = strlen(reg_msg) + 1; // reg_len = 13
 
-    
     /*
      *	allocate message buffer for Register Message to Main Kernel
+	 *	include payload + header
+	 *	
+	 *	@NLMSG_SPACE: 메시지 + 헤더 길이만큼 바이트 반환
      */ 
     nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(reg_len));
     if (!nlh) {
@@ -63,7 +65,7 @@ static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
      *	type
      *	flags 지정
      *
-     *	nlmsg_pid = 발신자 pid : 커널쪽에서 monitor_pid로 저장
+     *	nlmsg_pid = 발신자 pid : 커널쪽에서 target_pid로 저장
      */ 
     memset(nlh, 0, NLMSG_SPACE(reg_len));
     nlh->nlmsg_len = NLMSG_SPACE(reg_len);
@@ -71,23 +73,28 @@ static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
     nlh->nlmsg_flags = 0;
     nlh->nlmsg_pid = src_addr->nl_pid;
 
-    //copy data to payload 
+	/*
+	 *	@NLMSG_DATA: return payload pointer (*nlmsghdr)
+	 */
     strcpy(NLMSG_DATA(nlh), reg_msg);
+
+	/*--------------- 여기까지 등록 메세지 생성 ---------------*/
 
     /*
      * 	set destination
-     * 	destination is Main Kernel (PID = 0)
-     */ 
+     * 	Destination: Main Kernel (PID = 0)
+     */
     memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.nl_family = AF_NETLINK;
     dest_addr.nl_pid = 0; // 커널의 PID
     dest_addr.nl_groups = 0;
 
-    // msg 구조체 설정
+    // iovec iov
     memset(&iov, 0, sizeof(iov));
     iov.iov_base = (void *)nlh;
     iov.iov_len = nlh->nlmsg_len;
 
+	// msghdr msg
     memset(&msg, 0, sizeof(msg));
     msg.msg_name = (void *)&dest_addr;
     msg.msg_namelen = sizeof(dest_addr);
@@ -106,19 +113,14 @@ static void send_registration(int nl_socket_fd, struct sockaddr_nl *src_addr) {
 
 static int set_nl_socket() {
 	int nl_socket_fd;
-	struct sockaddr_nl src_addr;
-	struct sockaddr_nl dest_addr;
-
-	// Kernel에서 데이터 수신받은거 저장할 버퍼
-	char buffer[MAX_PAYLOAD];
+	struct sockaddr_nl src_addr; // user space netlink client
+	char buffer[MAX_PAYLOAD]; // 수신 데이터 저장 버퍼
 	struct syscall_data *received_data;
 
 	/*
-	 *	Create Netlink Socket
+	 *	Create socket
 	 *	use AF_NETLINK, SOCK_RAW, NETLINK_JMW=protocol 30
-	 *
 	 */
-
 	log_msg("Creating Netlink Listener (protocal: %d)", NETLINK_JMW);
 	nl_socket_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_JMW); // netlink socket fd 생성
 	if (nl_socket_fd < 0) {
@@ -130,9 +132,9 @@ static int set_nl_socket() {
 
 	/*
 	 * 	memset으로 src_addr 0으로 초기화
-	 * 	nl_family를 AF_NETLINK
-	 * 	nl_pid : 송신자 pid - 커널쪽 netlink에 알려줌
-	 * 	nl_groups = 0 : 유니캐스트
+	 * 	@nl_family: AF_NETLINK
+	 * 	@nl_pid: Port ID (pid)
+	 * 	@nl_groups: 0 (unicast)
 	 */
 	memset(&src_addr, 0, sizeof(src_addr));
 	src_addr.nl_family = AF_NETLINK;
@@ -142,7 +144,6 @@ static int set_nl_socket() {
 	/*
 	 *	(struct sockaddr *)&src_addr : IP주소, port번호 저장하기 위한 변수 구조체
 	 *	sizeof(src_addr) : 두번째 인자의 데이터 크기
-	 *
 	 */
 	if (bind(nl_socket_fd, (struct sockaddr *)&src_addr, sizeof(src_addr)) < 0) {
 		perror("[USER] Error : Failed to bind Netlink Socket");
@@ -161,7 +162,7 @@ static int set_nl_socket() {
  *  Parent Proc
  */
 static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
-	signal(SIGPIPE, SIG_IGN); // SIGPIPE 시그널(자식 종료 시그널) 무시
+	signal(SIGPIPE, SIG_IGN); // SIGPIPE 시그널(파이프 깨지는거) 무시
 
 	int nl_socket_fd = 0;
 	struct nlmsghdr *nlh = NULL;
@@ -179,6 +180,7 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 
 	/*
 	 *	Non-Blocking Write Pipe Setting
+	 *	파이프 큐 꽉차면 그냥 데이터 버림
 	 */
 	if (fcntl(write_pipe_fd, F_SETFL, fcntl(write_pipe_fd, F_GETFL) | O_NONBLOCK) == -1) {
 		perror("[PARENT] Error setting non-blocking pipe\n");
@@ -186,6 +188,10 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 	}
 
 	nl_socket_fd = set_nl_socket(); // get netlink socket fd
+	if (nl_socket_fd < 0) {
+		perror("[PARENT] Failed to get nl_socket_fd\n");
+		exit(0);
+	}
 
 	/*
 	 *	buffer allocation for Kernel Message
@@ -194,11 +200,13 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 	nlh = (struct nlmsghdr*)malloc(NLMSG_SPACE(MAX_PAYLOAD)); // header 설정
 	if (!nlh) {
 		perror("[USER] Error : Failed to allocate NLMSG buffer");
-		free(nlh);
 		close(nl_socket_fd);
 		exit(1);	
 	}
 
+	/*
+	 *	recvmsg에서 데이터 받아야해서
+	 */
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = (void *)nlh;
 	iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
@@ -227,6 +235,9 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 			break;
 		}
 
+		/*
+		 *	msg -> msg.msg_iov -> iov.iov_base (nlh)
+		 */
 		int len = recvmsg(nl_socket_fd, &msg, 0); // 커널에서 메세지 대기중..
 
 		if (len < 0) {
@@ -250,6 +261,13 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 		strcpy(pipe_data.syscall_name, hooked_syscall);
 
 		int written_bytes;
+		/*
+		 *	자식 파이프 닫히면, SIGPIPE가 발생해서 이 프로세스 바로 종료됨 (자식 파이프가 닫힐 땐, 자식이 proc디렉토리 열때 그 프로세스가 죽었다면)
+		 *	하지만, SIGPIPE를 SIG_IGN 처리했기 때문에, 무시하고 errno == EPIPE로 가서
+		 *	자원을 안정적으로 제거.
+		 *	
+		 *	EAGAIN: 파이프가 꽉참 
+		 */
 		written_bytes = write(write_pipe_fd, &pipe_data, sizeof(pipe_data)); // send struct to child proc
 		if (written_bytes == -1) { // 쓰기 에러
 			if (errno == EPIPE) { // 자식파이프 close 일 때
@@ -257,8 +275,8 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 				printf("[PARENT] Child Process Terminated\n");
 				break;
 			}
-			else if (errno == EAGAIN || errno == EWOULDBLOCK) { // Non-Blocking-pipe에서 쓰기 파이프가 꽉 찼을 때
-				(*pipe_drop_cnt_ptr)++;
+			else if (errno == EAGAIN || errno == EWOULDBLOCK) { // Non-Blocking-pipe 파이프가 꽉 찼을 때
+				(*pipe_drop_cnt_ptr)++; // 드롭수 증가
 				continue;
 			}
 			else { // 쓰기 기타 에러
@@ -269,9 +287,10 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 			}
 		}
 	}
+
 	/*
-		관찰중인 프로세스 종료되었을 때..
-	*/
+	 *	관찰중인 프로세스 종료되었을 때
+	 */
 	close(nl_socket_fd); // 넷링크 소켓 닫고
 	free(nlh);
 	close(write_pipe_fd); // 쓰기 파이프 닫고
@@ -308,7 +327,7 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 			if (status_fd == NULL) {
 				cursor_to(17, 1);
 				printf("[CHILD] 관찰중인 프로세스가 종료됨\n");
-				break;
+				break; // 자식 종료
 			}
 
 			MEM_INFO mem_info = get_mem_info(status_fd);
@@ -353,6 +372,7 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 		}
 	}
 	cursor_to(15, 1);
+	close(read_pipe_fd);
 	printf("[CHILD] Child Proc 종료..\n");
 }
 
