@@ -547,7 +547,6 @@ static int __kprobes do_page_fault(unsigned long far, unsigned long esr,
 	int si_code;
 	int pkey = -1;
 
-	printk(KERN_INFO "[JWM] Page Fault %d\n", current->pid);
 	if (system_state == SYSTEM_RUNNING) {
 		nl_send_msg(current->pid, "pagefault");
 	}
