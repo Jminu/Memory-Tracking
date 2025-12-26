@@ -132,8 +132,6 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	LIST_HEAD(uf);
 	struct vma_iterator vmi;
 
-	pid_t cur_pid = current->pid;
-
 	if (mmap_write_lock_killable(mm))
 		return -EINTR;
 
@@ -217,7 +215,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	 *	시스템이 부팅완료된 후, brk 호출 시 유저 단으로 current->pid 전송
 	 */
 	if (system_state == SYSTEM_RUNNING) {
-		nl_send_msg(cur_pid, "brk");
+		nl_send_msg(current->pid, "brk");
 	}
 
 success:
