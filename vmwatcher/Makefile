@@ -3,10 +3,14 @@ SRC_DIR = src
 HDR_DIR = include
 OBJ_DIR = build
 
-TARGET = memorytracker
+TARGET = vmwatcher 
 
-CFLAGS = -I$(HDR_DIR) -Wall -g
-LDFLAGS = 
+# CFLAGS: gcc에 전달하는 추가 옵션
+# LDFLAGS: linker에 전달하는 추가 옵션
+
+override CFLAGS += -I$(HDR_DIR)
+
+CC ?= gcc
 
 #-- 파일 목록 정의 --#
 OBJS = $(OBJ_DIR)/user_netlink_hook.o\
@@ -26,35 +30,35 @@ $(OBJ_DIR)/user_netlink_hook.o: $(SRC_DIR)/user_netlink_hook.c\
 	$(HDR_DIR)/ui.h
 	
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/proc_search.o: $(SRC_DIR)/proc_search.c\
 	$(HDR_DIR)/graph.h\
 	$(HDR_DIR)/log.h\
 	$(HDR_DIR)/ui.h
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 
 $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c\
 	$(HDR_DIR)/ui.h\
 	$(HDR_DIR)/log.h
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/mem.o: $(SRC_DIR)/mem.c\
 	$(HDR_DIR)/type.h
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/log.o: $(SRC_DIR)/log.c
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c\
 	$(HDR_DIR)/user_netlink_hook.h
 	@echo "---Compiling: $< -> $@"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 #-- 패턴 --#
 #$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -62,7 +66,7 @@ $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c\
 #	@echo "--- Compile Complete: $<   ->  $@"
 
 $(TARGET): $(OBJS)
-	gcc $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^
 	@echo "--- Linking Complete: $(TARGET) Created!! ---"
 
 clean:
