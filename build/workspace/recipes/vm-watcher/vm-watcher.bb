@@ -22,7 +22,7 @@ SRC_URI = ""
 #do_configure () {
 #}
 
-EXTRA_OEMAKE = " 'CC=${CC}' 'CFLAGS=${CFLAGS}' '-I${S}/include' 'LDFLAGS=${LDFLAGS}' "
+EXTRA_OEMAKE = " 'CC=${CC}' 'CFLAGS=${CFLAGS} -I${S}/include' 'LDFLAGS=${LDFLAGS}' "
 
 # Makefile 있는 곳에서 complie 진행
 do_compile () {

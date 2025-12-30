@@ -4,6 +4,9 @@
 #include <string.h>
 #include "ui.h"
 #include "log.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
@@ -18,6 +21,15 @@ int main(int argc, char *argv[]) {
 	strcpy(file_name, argv[1]);
 	printf("%s\n", file_name);
 	snprintf(full_path, sizeof(full_path), "%s%s", dir_name, file_name);
+
+	struct stat st = {0};
+	if (stat(dir_name, &st) == -1) {
+		if (mkdir(dir_name, 0755) == -1) {
+			perror("mkdir error");
+			return -1;
+		}
+	}
+
 
 	log_msg("Log파일 경로: %s", full_path);
 

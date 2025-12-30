@@ -8,9 +8,9 @@ TARGET = vmwatcher
 # CFLAGS: gcc에 전달하는 추가 옵션
 # LDFLAGS: linker에 전달하는 추가 옵션
 
-override CFLAGS += -I$(HDR_DIR)
+#override CFLAGS += -I$(HDR_DIR)
 
-CC ?= gcc
+# CC ?= gcc
 
 #-- 파일 목록 정의 --#
 OBJS = $(OBJ_DIR)/user_netlink_hook.o\
