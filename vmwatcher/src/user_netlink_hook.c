@@ -356,7 +356,8 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 
 			clear_line_n2m(1, 50);
 			cursor_to(4, 1);
-			log_msg_file(log_fd, "[brk]: %ld [mmap]: %ld [munmap]: %ld [page fault]: %ld [pipe drop]: %ld", cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault, *pipe_drop_cnt_ptr);
+			log_msg_file(log_fd, "[brk]: %ld [mmap]: %ld [munmap]: %ld [page fault]: %ld [pipe drop]: %ld", 
+					cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault, *pipe_drop_cnt_ptr);
 
 			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
 		}
@@ -387,11 +388,11 @@ void run(FILE *log_fd) {
 	pipe_drop_cnt_ptr = mmap(NULL, sizeof(long), PROT_READ | PROT_WRITE, 
                              MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     
-    if (pipe_drop_cnt_ptr == MAP_FAILED) { 
-        perror("[USER] Error: mmap failed for shared counter"); 
-        exit(EXIT_FAILURE); 
-    }
-    *pipe_drop_cnt_ptr = 0; // 카운터를 0으로 초기화
+	if (pipe_drop_cnt_ptr == MAP_FAILED) { 
+        	perror("[USER] Error: mmap failed for shared counter"); 
+        	exit(EXIT_FAILURE); 
+    	}
+    	*pipe_drop_cnt_ptr = 0; // 카운터를 0으로 초기화
 
 	if (pipe(fd) == -1) {
 		perror("Pipe Error");
