@@ -232,6 +232,7 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 
 	while (1) {
 		if (access(monitored_proc_path, F_OK) == -1) { // 관찰중인 프로세스가 살아있는지 검사
+			printf("관찰중인 프로세스 종료\n");
 			break;
 		}
 
@@ -293,7 +294,7 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 	 */
 	close(nl_socket_fd); // 넷링크 소켓 닫고
 	free(nlh);
-	close(write_pipe_fd); // 쓰기 파이프 닫고
+	close(write_pipe_fd); // 쓰기 파이프 닫고, 자식 read pipe에 0전달
 
 	waitpid(child_pid, NULL, 0); // 자식 프로세스가 종료될 떄까지 대기
 
@@ -306,7 +307,6 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
  *	proc 디렉토리 탐색 및 UI, Log 출력
  */
 static void anal_child(int read_pipe_fd, FILE *log_fd) {
-	pid_t recv_pid;
 	PIPE_DATA recv_pipe_data;
 
 	static long cnt_total = 0;
@@ -315,65 +315,70 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 	static long cnt_munmap = 0;
 	static long cnt_page_fault = 0;
 
+	FILE *cached_status_fd = NULL;
+
 	while (1) {
 		int read_bytes = read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)); // 부모한테 파이프에서 전달 이벤트 대기
-		
-		if (read_bytes > 0) {
-			cursor_to(1, 1); // (1) - (1, 1)로 이동
-			clear_line_n2m(1, 50); // (2) - 1열부터 50열까지 지움
-			cursor_to(1, 1); // (3) - 다시 (1, 1)로 이동
-
-			FILE *status_fd = open_proc_stat(recv_pipe_data.hooked_pid); // 관찰중인 프로세스 열어봄
-			if (status_fd == NULL) {
-				cursor_to(17, 1);
-				printf("[CHILD] 관찰중인 프로세스가 종료됨\n");
-				break; // 자식 종료
-			}
-
-			MEM_INFO mem_info = get_mem_info(status_fd);
-			fclose(status_fd);
-
-			if (strcmp(recv_pipe_data.syscall_name, "brk") == 0) {
-				cnt_brk++;
-			}
-			else if (strcmp(recv_pipe_data.syscall_name, "mmap") == 0) {
-				cnt_mmap++;
-			}
-			else if (strcmp(recv_pipe_data.syscall_name, "munmap") == 0) {
-				cnt_munmap++;
-			}
-			else {
-				cnt_page_fault++;
-			}
-
-			clear_line_n2m(1, 50);
-			cursor_to(2, 1);
-			log_msg_file(log_fd, "[RECEIVED] %s", recv_pipe_data.syscall_name);
-
-			clear_line_n2m(1, 50);
-			cursor_to(3, 1);
-			log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
-
-			clear_line_n2m(1, 50);
-			cursor_to(4, 1);
-			log_msg_file(log_fd, "[brk]: %ld [mmap]: %ld [munmap]: %ld [page fault]: %ld [pipe drop]: %ld", 
-					cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault, *pipe_drop_cnt_ptr);
-
-			print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
-		}
-		else if (read_bytes == 0){ // read가 0을 반환 -> 부모의 write파이프 닫힘
+		if (read_bytes == 0) {
 			cursor_to(16, 1);
 			printf("[CHILD] 부모 listener 종료\n");
 			break;
 		}
-		else {
+		else if (read_bytes == -1) {
 			cursor_to(16, 1);
 			printf("[CHILD] read 에러\n");
 			break;
 		}
+
+		cursor_to(1, 1); // (1) - (1, 1)로 이동
+		clear_line_n2m(1, 50); // (2) - 1열부터 50열까지 지움
+		cursor_to(1, 1); // (3) - 다시 (1, 1)로 이동
+
+		// 처음이라면 관찰중인 프로세스 파일 열어봄
+		if (cached_status_fd == NULL) {
+			cached_status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
+			if (cached_status_fd == NULL) {
+				cursor_to(17, 1);
+				printf("[CHILD] 관찰중인 프로세스 파일 오픈 실패\n");
+				break;
+			}
+		}
+
+		rewind(cached_status_fd); // 다시 파일 앞에서부터 읽음
+
+		MEM_INFO mem_info = get_mem_info(cached_status_fd); // 프로세스의 메모리 정보 가져오기
+
+		if (strcmp(recv_pipe_data.syscall_name, "brk") == 0) {
+			cnt_brk++;
+		}
+		else if (strcmp(recv_pipe_data.syscall_name, "mmap") == 0) {
+			cnt_mmap++;
+		}
+		else if (strcmp(recv_pipe_data.syscall_name, "munmap") == 0) {
+			cnt_munmap++;
+		}
+		else {
+			cnt_page_fault++;
+		}
+
+		clear_line_n2m(1, 50);
+		cursor_to(2, 1);
+		log_msg_file(log_fd, "[RECEIVED] %s", recv_pipe_data.syscall_name);
+
+		clear_line_n2m(1, 50);
+		cursor_to(3, 1);
+		log_msg_file(log_fd, "[HOOKED PID] %d", recv_pipe_data.hooked_pid);
+
+		clear_line_n2m(1, 50);
+		cursor_to(4, 1);
+		log_msg_file(log_fd, "[brk]: %ld [mmap]: %ld [munmap]: %ld [page fault]: %ld [pipe drop]: %ld", 
+				cnt_brk, cnt_mmap, cnt_munmap, cnt_page_fault, *pipe_drop_cnt_ptr);
+
+		print_ratio_graph(mem_info.vm_rss, mem_info.vm_size, log_fd);
 	}
 	cursor_to(15, 1);
 	close(read_pipe_fd);
+	fclose(cached_status_fd);
 	printf("[CHILD] Child Proc 종료..\n");
 }
 
