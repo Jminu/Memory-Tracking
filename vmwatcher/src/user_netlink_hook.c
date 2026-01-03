@@ -18,6 +18,10 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+// 브랜치 예측 정의
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
 // 커널과 동일한 프로토콜 ID 및 구조체 정의
 #define NETLINK_JMW 30
 #define MAX_PAYLOAD 1024 // max message payload size 
@@ -231,7 +235,7 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 	int first_event_flag = 0; // 실행시간 측정용
 
 	while (1) {
-		if (access(monitored_proc_path, F_OK) == -1) { // 관찰중인 프로세스가 살아있는지 검사
+		if (unlikely(access(monitored_proc_path, F_OK) == -1)) {
 			printf("관찰중인 프로세스 종료\n");
 			break;
 		}
@@ -241,7 +245,7 @@ static void listen_syscall(int write_pipe_fd, pid_t child_pid) {
 		 */
 		int len = recvmsg(nl_socket_fd, &msg, 0); // 커널에서 메세지 대기중..
 
-		if (len < 0) {
+		if (unlikely(len < 0)) {
 			perror("[USER] Error during recvmsg");
 			free(nlh);
 			close(nl_socket_fd);
@@ -319,12 +323,12 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 
 	while (1) {
 		int read_bytes = read(read_pipe_fd, &recv_pipe_data, sizeof(recv_pipe_data)); // 부모한테 파이프에서 전달 이벤트 대기
-		if (read_bytes == 0) {
+		if (unlikely(read_bytes == 0)) {
 			cursor_to(16, 1);
 			printf("[CHILD] 부모 listener 종료\n");
 			break;
 		}
-		else if (read_bytes == -1) {
+		else if (unlikely(read_bytes == -1)) {
 			cursor_to(16, 1);
 			printf("[CHILD] read 에러\n");
 			break;
@@ -335,7 +339,7 @@ static void anal_child(int read_pipe_fd, FILE *log_fd) {
 		cursor_to(1, 1); // (3) - 다시 (1, 1)로 이동
 
 		// 처음이라면 관찰중인 프로세스 파일 열어봄
-		if (cached_status_fd == NULL) {
+		if (unlikely(cached_status_fd == NULL)) {
 			cached_status_fd = open_proc_stat(recv_pipe_data.hooked_pid);
 			if (cached_status_fd == NULL) {
 				cursor_to(17, 1);
