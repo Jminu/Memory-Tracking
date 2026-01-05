@@ -10,12 +10,22 @@
 #include <net/sock.h>
 #include <linux/pid.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #define NETLINK_JMW 30
 #define SYSCALL_NAME_LENGTH 10
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("JMW");
+
+static inline u64 read_cycles(void) {
+	u64 val;
+	asm volatile("mrs %0, cntvct_el0" : "=r" (val));
+	return val;
+}
+
+static u64 total_cycles = 0;
+static u64 call_count = 0;
 
 struct sock *netlink_socket = NULL;
 static pid_t target_pid = 0;
@@ -47,6 +57,9 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 
 	int data_length = sizeof(data);
 
+	u64 cycles_start, cycles_end;
+	cycles_start = read_cycles(); // 사이클 시작
+
 	/*
 	 * nlmsg_new : Allocate a new netlink message buffer
 	 *
@@ -54,7 +67,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * GFP_KERNEL : type of memory to allocate
 	 */
 	skb_out = nlmsg_new(data_length, GFP_KERNEL); 
-	if (!skb_out) {
+	if (unlikely(!skb_out)) {
 		printk(KERN_ERR "[JMW] Netlink Alloc failed!\n");
 		return;
 	}
@@ -70,7 +83,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * flag : 
 	 */	
 	nlh = nlmsg_put(skb_out, 0, 0, NETLINK_JMW, data_length, 0);
-	if (!nlh) {
+	if (unlikely(!nlh)) {
 		kfree_skb(skb_out);
 		return;
 	}
@@ -90,13 +103,23 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * monitor_pid : 대상 프로세스 PID -> 도착 소켓의 Port ID
 	 */
 
-	if (target_pid == 0) { // 아직 수신자 등록 안되었을 때
+	if (unlikely(target_pid == 0)) { // 아직 수신자 등록 안되었을 때
+		kfree_skb(skb_out);
 		return;
 	}
 
 	int ret = nlmsg_unicast(netlink_socket, skb_out, target_pid); // unicast : 1:1통신
-	if (ret < 0) {
-		printk(KERN_ERR "[JMW] Netlink send error!\n");
+	if (unlikely(ret < 0)) {
+		// printk(KERN_ERR "[JMW] Netlink send error!\n");
+		return;
+	}
+
+	cycles_end = read_cycles();
+	total_cycles += (cycles_end - cycles_start);
+	call_count++;
+
+	if (call_count % 10000 == 0) {
+		printk(KERN_INFO "[JMW] Branch prediction: %llu cycles (total calls: %llu)\n", total_cycles / call_count, call_count);
 	}
 }
 
