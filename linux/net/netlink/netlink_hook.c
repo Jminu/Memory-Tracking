@@ -67,7 +67,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * GFP_KERNEL : type of memory to allocate
 	 */
 	skb_out = nlmsg_new(data_length, GFP_KERNEL); 
-	if (unlikely(!skb_out)) {
+	if (!skb_out) {
 		printk(KERN_ERR "[JMW] Netlink Alloc failed!\n");
 		return;
 	}
@@ -83,7 +83,7 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * flag : 
 	 */	
 	nlh = nlmsg_put(skb_out, 0, 0, NETLINK_JMW, data_length, 0);
-	if (unlikely(!nlh)) {
+	if (!nlh) {
 		kfree_skb(skb_out);
 		return;
 	}
@@ -105,11 +105,13 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 
 	// 관찰중인 프로세스 살아있다면,
 	// 통신시도 -> 시도 실패(프로세스가 죽은게 확인되었다면)시 target_pid=0 으로 변경
-	if (likely(target_pid > 0)) {
+	if (target_pid > 0) {
 		int ret = nlmsg_unicast(netlink_socket, skb_out, target_pid); // unicast : 1:1통신
-		if (unlikely(ret < 0)) {
+		if (ret < 0) {
 			printk(KERN_ERR "[JMW] Netlink send err!\n");
 			target_pid = 0;
+			total_cycles = 0;
+			call_count = 0;
 		}
 	}
 	else {
