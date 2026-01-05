@@ -110,6 +110,8 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 		if (unlikely(ret < 0)) {
 			printk(KERN_ERR "[JMW] Netlink send err!\n");
 			target_pid = 0;
+			total_cycles = 0;
+			call_count = 0;
 		}
 	}
 	else {
