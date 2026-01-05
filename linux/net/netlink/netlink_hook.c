@@ -103,15 +103,17 @@ void nl_send_msg(pid_t pid, const char *syscall_name)
 	 * monitor_pid : 대상 프로세스 PID -> 도착 소켓의 Port ID
 	 */
 
-	if (unlikely(target_pid == 0)) { // 아직 수신자 등록 안되었을 때
-		kfree_skb(skb_out);
-		return;
+	// 관찰중인 프로세스 살아있다면,
+	// 통신시도 -> 시도 실패(프로세스가 죽은게 확인되었다면)시 target_pid=0 으로 변경
+	if (target_pid > 0) {
+		int ret = nlmsg_unicast(netlink_socket, skb_out, target_pid); // unicast : 1:1통신
+		if (ret < 0) {
+			printk(KERN_ERR "[JMW] Netlink send err!\n");
+			target_pid = 0;
+		}
 	}
-
-	int ret = nlmsg_unicast(netlink_socket, skb_out, target_pid); // unicast : 1:1통신
-	if (unlikely(ret < 0)) {
-		// printk(KERN_ERR "[JMW] Netlink send error!\n");
-		return;
+	else {
+		kfree_skb(skb_out);
 	}
 
 	cycles_end = read_cycles();
