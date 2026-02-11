@@ -49,7 +49,8 @@ Linux 커널의 메모리 관리 시스템 콜을 실시간으로 후킹하여 �
 + Non-blocking 파이프 + 흐름제어 (넷링크 큐 포화 대응)
 
 ## 구조
-<img width="612" height="383" alt="그림1" src="https://github.com/user-attachments/assets/722d9325-f275-40fc-a521-e5f91cf5dcef" />
+<img width="809" height="455" alt="Untitled-2026-02-11-1338(1)" src="https://github.com/user-attachments/assets/f1f73a14-eef2-450b-a391-09b66a5797bf" />
+
 
 ### Kernel
 + Netlink Socket 빌트인 모듈 구현
